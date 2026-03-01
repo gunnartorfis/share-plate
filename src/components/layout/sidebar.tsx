@@ -1,6 +1,8 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import type { User } from '@/lib/db/schema'
 import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const NAV = [
   { to: '/planner', labelKey: 'nav.planner', icon: CalendarIcon },
@@ -10,14 +12,21 @@ const NAV = [
   { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: User }) {
   const { t } = useTranslation()
   const { location } = useRouterState()
+
+  const initials = user.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
   return (
     <aside className="hidden md:flex w-[220px] min-h-screen bg-sidebar text-sidebar-foreground flex-col shrink-0">
       {/* Logo */}
-      <div className="px-5 pt-7 pb-6">
+      <div className="px-5 pt-7 pb-4">
         <span
           className="text-2xl font-display font-bold tracking-tight"
           style={{ fontVariationSettings: '"opsz" 144' }}
@@ -27,6 +36,22 @@ export function Sidebar() {
         <p className="text-sidebar-foreground/50 text-xs mt-0.5">
           {t('home.subtitle')}
         </p>
+      </div>
+
+      {/* User */}
+      <div className="px-3 py-2 mb-2">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-sidebar-accent/30">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{user.name}</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">
+              {user.email}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Nav */}
