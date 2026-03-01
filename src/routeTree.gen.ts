@@ -16,9 +16,12 @@ import { Route as LinksRouteImport } from './routes/links'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlannerIndexRouteImport } from './routes/planner/index'
 import { Route as GroupsIndexRouteImport } from './routes/groups/index'
+import { Route as FamiliesIndexRouteImport } from './routes/families/index'
 import { Route as PlannerWeekRouteImport } from './routes/planner/$week'
 import { Route as GroupsNewRouteImport } from './routes/groups/new'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
+import { Route as FamiliesNewRouteImport } from './routes/families/new'
+import { Route as FamiliesFamilyIdRouteImport } from './routes/families/$familyId'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -55,6 +58,11 @@ const GroupsIndexRoute = GroupsIndexRouteImport.update({
   path: '/groups/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FamiliesIndexRoute = FamiliesIndexRouteImport.update({
+  id: '/families/',
+  path: '/families/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlannerWeekRoute = PlannerWeekRouteImport.update({
   id: '/planner/$week',
   path: '/planner/$week',
@@ -70,6 +78,16 @@ const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
   path: '/groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FamiliesNewRoute = FamiliesNewRouteImport.update({
+  id: '/families/new',
+  path: '/families/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamiliesFamilyIdRoute = FamiliesFamilyIdRouteImport.update({
+  id: '/families/$familyId',
+  path: '/families/$familyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -77,9 +95,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/families/$familyId': typeof FamiliesFamilyIdRoute
+  '/families/new': typeof FamiliesNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
   '/planner/$week': typeof PlannerWeekRoute
+  '/families/': typeof FamiliesIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/planner/': typeof PlannerIndexRoute
 }
@@ -89,9 +110,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/families/$familyId': typeof FamiliesFamilyIdRoute
+  '/families/new': typeof FamiliesNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
   '/planner/$week': typeof PlannerWeekRoute
+  '/families': typeof FamiliesIndexRoute
   '/groups': typeof GroupsIndexRoute
   '/planner': typeof PlannerIndexRoute
 }
@@ -102,9 +126,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/families/$familyId': typeof FamiliesFamilyIdRoute
+  '/families/new': typeof FamiliesNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
   '/planner/$week': typeof PlannerWeekRoute
+  '/families/': typeof FamiliesIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/planner/': typeof PlannerIndexRoute
 }
@@ -116,9 +143,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/settings'
+    | '/families/$familyId'
+    | '/families/new'
     | '/groups/$groupId'
     | '/groups/new'
     | '/planner/$week'
+    | '/families/'
     | '/groups/'
     | '/planner/'
   fileRoutesByTo: FileRoutesByTo
@@ -128,9 +158,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/settings'
+    | '/families/$familyId'
+    | '/families/new'
     | '/groups/$groupId'
     | '/groups/new'
     | '/planner/$week'
+    | '/families'
     | '/groups'
     | '/planner'
   id:
@@ -140,9 +173,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/settings'
+    | '/families/$familyId'
+    | '/families/new'
     | '/groups/$groupId'
     | '/groups/new'
     | '/planner/$week'
+    | '/families/'
     | '/groups/'
     | '/planner/'
   fileRoutesById: FileRoutesById
@@ -153,9 +189,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
+  FamiliesFamilyIdRoute: typeof FamiliesFamilyIdRoute
+  FamiliesNewRoute: typeof FamiliesNewRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   GroupsNewRoute: typeof GroupsNewRoute
   PlannerWeekRoute: typeof PlannerWeekRoute
+  FamiliesIndexRoute: typeof FamiliesIndexRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
   PlannerIndexRoute: typeof PlannerIndexRoute
 }
@@ -211,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/families/': {
+      id: '/families/'
+      path: '/families'
+      fullPath: '/families/'
+      preLoaderRoute: typeof FamiliesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/planner/$week': {
       id: '/planner/$week'
       path: '/planner/$week'
@@ -232,6 +278,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/families/new': {
+      id: '/families/new'
+      path: '/families/new'
+      fullPath: '/families/new'
+      preLoaderRoute: typeof FamiliesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/families/$familyId': {
+      id: '/families/$familyId'
+      path: '/families/$familyId'
+      fullPath: '/families/$familyId'
+      preLoaderRoute: typeof FamiliesFamilyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -241,9 +301,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
+  FamiliesFamilyIdRoute: FamiliesFamilyIdRoute,
+  FamiliesNewRoute: FamiliesNewRoute,
   GroupsGroupIdRoute: GroupsGroupIdRoute,
   GroupsNewRoute: GroupsNewRoute,
   PlannerWeekRoute: PlannerWeekRoute,
+  FamiliesIndexRoute: FamiliesIndexRoute,
   GroupsIndexRoute: GroupsIndexRoute,
   PlannerIndexRoute: PlannerIndexRoute,
 }

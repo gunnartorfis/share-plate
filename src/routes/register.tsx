@@ -1,30 +1,30 @@
-import { createFileRoute, useRouter, Link } from "@tanstack/react-router"
-import { useState } from "react"
-import { register } from "@/lib/server/auth"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
+import { register } from '@/lib/server/auth'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-export const Route = createFileRoute("/register")({ component: RegisterPage })
+export const Route = createFileRoute('/register')({ component: RegisterPage })
 
 function RegisterPage() {
   const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError("")
+    setError('')
     setLoading(true)
     try {
       await register({ data: { name, email, password } })
       await router.invalidate()
-      router.navigate({ to: "/planner" })
+      router.navigate({ to: '/planner' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed")
+      setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -37,11 +37,15 @@ function RegisterPage() {
           <h1 className="text-4xl font-display font-bold text-foreground tracking-tight mb-1">
             Share Plate
           </h1>
-          <p className="text-muted-foreground text-sm">Dinner planning for your group</p>
+          <p className="text-muted-foreground text-sm">
+            Dinner planning for your group
+          </p>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
-          <h2 className="text-lg font-display font-semibold mb-6">Create account</h2>
+          <h2 className="text-lg font-display font-semibold mb-6">
+            Create account
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
@@ -79,7 +83,9 @@ function RegisterPage() {
                 minLength={8}
                 required
               />
-              <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters
+              </p>
             </div>
 
             {error && (
@@ -89,13 +95,16 @@ function RegisterPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account…" : "Create account"}
+              {loading ? 'Creating account…' : 'Create account'}
             </Button>
           </form>
 
           <p className="mt-5 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link to="/login" className="text-primary font-medium hover:underline">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="text-primary font-medium hover:underline"
+            >
               Sign in
             </Link>
           </p>

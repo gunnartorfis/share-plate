@@ -216,6 +216,31 @@ export const getPastMealNames = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+export const getPastRecipeUrls = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const rows = await db
+      .select({ recipeUrl: dayPlans.recipeUrl })
+      .from(dayPlans)
+      .innerJoin(mealPlans, eq(dayPlans.mealPlanId, mealPlans.id))
+      .where(and(eq(mealPlans.userId, user.id), isNotNull(dayPlans.recipeUrl)))
+      .orderBy(desc(mealPlans.weekStart))
+
+    const seen = new Set<string>()
+    return rows
+      .filter((r) => {
+        if (r.recipeUrl && !seen.has(r.recipeUrl)) {
+          seen.add(r.recipeUrl)
+          return true
+        }
+        return false
+      })
+      .map((r) => r.recipeUrl as string)
+  },
+)
+
 export const getGroupFeed = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
     z.object({ groupId: z.string(), weekStart: z.string() }).parse(data),

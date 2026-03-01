@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db'
-import { groupMembers, groups, users } from '../db/schema'
+import { familyMembers, families, users } from '../db/schema'
 import { getUser } from '../auth/get-user'
 
 function uid() {
@@ -16,22 +16,22 @@ function generateInviteCode(): string {
     .join('')
 }
 
-export const getMyGroups = createServerFn({ method: 'GET' }).handler(
+export const getMyFamilies = createServerFn({ method: 'GET' }).handler(
   async () => {
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
     const rows = await db
-      .select({ group: groups, role: groupMembers.role })
-      .from(groupMembers)
-      .innerJoin(groups, eq(groupMembers.groupId, groups.id))
-      .where(eq(groupMembers.userId, user.id))
+      .select({ family: families, role: familyMembers.role })
+      .from(familyMembers)
+      .innerJoin(families, eq(familyMembers.familyId, families.id))
+      .where(eq(familyMembers.userId, user.id))
 
-    return rows.map(({ group, role }) => ({ ...group, role }))
+    return rows.map(({ family, role }) => ({ ...family, role }))
   },
 )
 
-export const createGroup = createServerFn({ method: 'POST' })
+export const createFamily = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) =>
     z.object({ name: z.string().min(1) }).parse(data),
   )
@@ -43,16 +43,16 @@ export const createGroup = createServerFn({ method: 'POST' })
     const inviteCode = generateInviteCode()
 
     await db
-      .insert(groups)
+      .insert(families)
       .values({ id, name: data.name, createdBy: user.id, inviteCode })
     await db
-      .insert(groupMembers)
-      .values({ groupId: id, userId: user.id, role: 'admin' })
+      .insert(familyMembers)
+      .values({ familyId: id, userId: user.id, role: 'admin' })
 
     return { id, inviteCode }
   })
 
-export const joinGroup = createServerFn({ method: 'POST' })
+export const joinFamily = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) =>
     z.object({ inviteCode: z.string() }).parse(data),
   )
@@ -60,37 +60,37 @@ export const joinGroup = createServerFn({ method: 'POST' })
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
-    const group = await db
+    const family = await db
       .select()
-      .from(groups)
-      .where(eq(groups.inviteCode, data.inviteCode.toUpperCase()))
+      .from(families)
+      .where(eq(families.inviteCode, data.inviteCode.toUpperCase()))
       .limit(1)
 
-    if (!group[0]) throw new Error('Invalid invite code')
+    if (!family[0]) throw new Error('Invalid invite code')
 
     const existing = await db
       .select()
-      .from(groupMembers)
+      .from(familyMembers)
       .where(
         and(
-          eq(groupMembers.groupId, group[0].id),
-          eq(groupMembers.userId, user.id),
+          eq(familyMembers.familyId, family[0].id),
+          eq(familyMembers.userId, user.id),
         ),
       )
       .limit(1)
 
-    if (existing[0]) return group[0].id // already a member
+    if (existing[0]) return family[0].id
 
     await db
-      .insert(groupMembers)
-      .values({ groupId: group[0].id, userId: user.id, role: 'member' })
+      .insert(familyMembers)
+      .values({ familyId: family[0].id, userId: user.id, role: 'member' })
 
-    return group[0].id
+    return family[0].id
   })
 
-export const getGroup = createServerFn({ method: 'GET' })
+export const getFamily = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
-    z.object({ groupId: z.string() }).parse(data),
+    z.object({ familyId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
     const user = await getUser()
@@ -98,30 +98,30 @@ export const getGroup = createServerFn({ method: 'GET' })
 
     const membership = await db
       .select()
-      .from(groupMembers)
+      .from(familyMembers)
       .where(
         and(
-          eq(groupMembers.groupId, data.groupId),
-          eq(groupMembers.userId, user.id),
+          eq(familyMembers.familyId, data.familyId),
+          eq(familyMembers.userId, user.id),
         ),
       )
       .limit(1)
     if (!membership[0]) throw new Error('Not a member')
 
-    const [group] = await db
+    const [family] = await db
       .select()
-      .from(groups)
-      .where(eq(groups.id, data.groupId))
-    if (!group) throw new Error('Group not found')
+      .from(families)
+      .where(eq(families.id, data.familyId))
+    if (!family) throw new Error('Family not found')
 
     const members = await db
-      .select({ user: users, role: groupMembers.role })
-      .from(groupMembers)
-      .innerJoin(users, eq(groupMembers.userId, users.id))
-      .where(eq(groupMembers.groupId, data.groupId))
+      .select({ user: users, role: familyMembers.role })
+      .from(familyMembers)
+      .innerJoin(users, eq(familyMembers.userId, users.id))
+      .where(eq(familyMembers.familyId, data.familyId))
 
     return {
-      ...group,
+      ...family,
       role: membership[0].role,
       members: members.map(({ user: u, role }) => ({
         id: u.id,
@@ -132,19 +132,19 @@ export const getGroup = createServerFn({ method: 'GET' })
     }
   })
 
-export const leaveGroup = createServerFn({ method: 'POST' })
+export const leaveFamily = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) =>
-    z.object({ groupId: z.string() }).parse(data),
+    z.object({ familyId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
     await db
-      .delete(groupMembers)
+      .delete(familyMembers)
       .where(
         and(
-          eq(groupMembers.groupId, data.groupId),
-          eq(groupMembers.userId, user.id),
+          eq(familyMembers.familyId, data.familyId),
+          eq(familyMembers.userId, user.id),
         ),
       )
   })

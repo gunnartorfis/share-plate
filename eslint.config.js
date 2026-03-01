@@ -31,7 +31,8 @@ export default [
                     text.length > 0 &&
                     /^[a-zA-Z\s.,!?'"()-]+$/.test(text) &&
                     !text.includes('{{') &&
-                    !text.includes('i18n')
+                    !text.includes('i18n') &&
+                    !text.includes('.') // translation keys contain dots
                   ) {
                     context.report({
                       node,
@@ -44,7 +45,8 @@ export default [
                     typeof node.value === 'string' &&
                     node.value.length > 0 &&
                     /^[a-zA-Z\s.,!?'"()-]+$/.test(node.value) &&
-                    !node.value.includes('{{')
+                    !node.value.includes('{{') &&
+                    !node.value.includes('.') // translation keys contain dots
                   ) {
                     const parent = node.parent
                     if (
@@ -53,7 +55,8 @@ export default [
                       (parent.key.name === 'placeholder' ||
                         parent.key.name === 'title' ||
                         parent.key.name === 'alt' ||
-                        parent.key.name === 'aria-label')
+                        parent.key.name === 'aria-label' ||
+                        parent.key.name === 'id')
                     ) {
                       return
                     }

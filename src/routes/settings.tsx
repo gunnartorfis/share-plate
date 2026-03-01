@@ -24,14 +24,14 @@ import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/settings')({ component: SettingsPage })
 
-const DAY_NAMES = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
+const DAY_KEYS = [
+  'days.monday',
+  'days.tuesday',
+  'days.wednesday',
+  'days.thursday',
+  'days.friday',
+  'days.saturday',
+  'days.sunday',
 ]
 
 const PRESET_COLORS = [
@@ -56,7 +56,7 @@ type Constraint = {
 
 function SettingsPage() {
   const router = useRouter()
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [tab, setTab] = useState<
     'constraints' | 'profile' | 'password' | 'language'
   >('language')
@@ -138,7 +138,7 @@ function SettingsPage() {
   }
 
   async function handleDeleteConstraint(id: string) {
-    if (!confirm('Delete this constraint?')) return
+    if (!confirm(t('common.deleteConfirm'))) return
     await deleteConstraint({ data: { id } })
     await loadConstraints()
   }
@@ -161,7 +161,7 @@ function SettingsPage() {
       await updateProfile({ data: { name: pName, email: pEmail } })
       await router.invalidate()
     } catch (err) {
-      setPError(err instanceof Error ? err.message : 'Failed to update profile')
+      setPError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setPsaving(false)
     }
@@ -180,9 +180,7 @@ function SettingsPage() {
       setPwNew('')
       setPwSuccess(true)
     } catch (err) {
-      setPwError(
-        err instanceof Error ? err.message : 'Failed to change password',
-      )
+      setPwError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setPwSaving(false)
     }
@@ -198,24 +196,24 @@ function SettingsPage() {
     <AppLayout>
       <div className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-display font-bold tracking-tight mb-8">
-          Settings
+          {t('settings.title')}
         </h1>
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-border">
           {(['constraints', 'profile', 'password', 'language'] as const).map(
-            (t) => (
+            (key) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={key}
+                onClick={() => setTab(key)}
                 className={cn(
                   'px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
-                  tab === t
+                  tab === key
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 )}
               >
-                {t}
+                {t(`settings.${key}`)}
               </button>
             ),
           )}
@@ -227,7 +225,7 @@ function SettingsPage() {
             {/* Constraint builder */}
             <div>
               <h2 className="text-base font-display font-semibold mb-4">
-                My constraints
+                {t('settings.myConstraints')}
               </h2>
 
               {/* Existing constraints */}
@@ -264,13 +262,15 @@ function SettingsPage() {
               <div className="bg-card border border-border rounded-lg p-5">
                 <h3 className="text-sm font-semibold mb-4">
                   {editingConstraint
-                    ? `Edit "${editingConstraint.name}"`
-                    : 'New constraint'}
+                    ? `${t('settings.editConstraint')} "${editingConstraint.name}"`
+                    : t('settings.newConstraint')}
                 </h3>
                 <form onSubmit={handleSaveConstraint} className="space-y-4">
                   <div className="flex gap-3">
                     <div className="flex-1 space-y-1.5">
-                      <Label htmlFor="cname">Name</Label>
+                      <Label htmlFor="cname">
+                        {t('settings.constraintName')}
+                      </Label>
                       <Input
                         id="cname"
                         value={cName}
@@ -280,7 +280,9 @@ function SettingsPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="cemoji">Emoji</Label>
+                      <Label htmlFor="cemoji">
+                        {t('settings.constraintEmoji')}
+                      </Label>
                       <Input
                         id="cemoji"
                         value={cEmoji}
@@ -294,7 +296,7 @@ function SettingsPage() {
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">
-                      Color
+                      {t('settings.constraintColor')}
                     </label>
                     <div className="flex gap-2 flex-wrap">
                       {PRESET_COLORS.map((color) => (
@@ -318,7 +320,7 @@ function SettingsPage() {
                   {cName && (
                     <div>
                       <label className="text-sm font-medium mb-2 block">
-                        Preview
+                        {t('settings.preview')}
                       </label>
                       <span
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium border"
@@ -341,15 +343,15 @@ function SettingsPage() {
                         variant="outline"
                         onClick={openNewConstraint}
                       >
-                        New
+                        {t('common.create')}
                       </Button>
                     )}
                     <Button type="submit" disabled={cSaving}>
                       {cSaving
-                        ? 'Saving…'
+                        ? t('common.saving')
                         : editingConstraint
-                          ? 'Update'
-                          : 'Add constraint'}
+                          ? t('common.update')
+                          : t('common.add')}
                     </Button>
                   </div>
                 </form>
@@ -360,15 +362,16 @@ function SettingsPage() {
             {constraints.length > 0 && (
               <div>
                 <h2 className="text-base font-display font-semibold mb-1">
-                  Day defaults
+                  {t('settings.dayDefaults')}
                 </h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Set default constraints per weekday. These auto-apply when
-                  planning.
+                  {t('settings.dayDefaultsDesc')}
                 </p>
                 <div className="space-y-3">
-                  {DAY_NAMES.map((dayName, i) => {
-                    const template = templates.find((t) => t.dayOfWeek === i)
+                  {DAY_KEYS.map((dayKey, i) => {
+                    const template = templates.find(
+                      (templateItem) => templateItem.dayOfWeek === i,
+                    )
                     const activeIds = template?.constraintIds ?? []
                     return (
                       <div
@@ -376,7 +379,7 @@ function SettingsPage() {
                         className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3"
                       >
                         <span className="text-sm font-medium w-24 shrink-0">
-                          {dayName}
+                          {t(dayKey)}
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {constraints.map((c) => {
@@ -416,7 +419,7 @@ function SettingsPage() {
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="pname">Name</Label>
+                <Label htmlFor="pname">{t('common.name')}</Label>
                 <Input
                   id="pname"
                   value={pName}
@@ -425,7 +428,7 @@ function SettingsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="pemail">Email</Label>
+                <Label htmlFor="pemail">{t('common.email')}</Label>
                 <Input
                   id="pemail"
                   type="email"
@@ -440,7 +443,7 @@ function SettingsPage() {
                 </p>
               )}
               <Button type="submit" disabled={pSaving}>
-                {pSaving ? 'Saving…' : 'Update profile'}
+                {pSaving ? t('common.saving') : t('settings.updateProfile')}
               </Button>
             </form>
 
@@ -450,7 +453,7 @@ function SettingsPage() {
                 onClick={handleLogout}
                 className="text-destructive hover:text-destructive"
               >
-                Sign out
+                {t('auth.signOut')}
               </Button>
             </div>
           </div>
@@ -461,7 +464,7 @@ function SettingsPage() {
           <div className="bg-card border border-border rounded-lg p-6">
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="pwcurrent">Current password</Label>
+                <Label htmlFor="pwcurrent">{t('auth.currentPassword')}</Label>
                 <Input
                   id="pwcurrent"
                   type="password"
@@ -471,7 +474,7 @@ function SettingsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="pwnew">New password</Label>
+                <Label htmlFor="pwnew">{t('auth.newPassword')}</Label>
                 <Input
                   id="pwnew"
                   type="password"
@@ -488,11 +491,11 @@ function SettingsPage() {
               )}
               {pwSuccess && (
                 <p className="text-sm text-primary bg-primary/10 px-3 py-2 rounded-md">
-                  Password changed successfully
+                  {t('settings.passwordChanged')}
                 </p>
               )}
               <Button type="submit" disabled={pwSaving}>
-                {pwSaving ? 'Changing…' : 'Change password'}
+                {pwSaving ? t('common.changing') : t('settings.changePassword')}
               </Button>
             </form>
           </div>
@@ -502,16 +505,16 @@ function SettingsPage() {
         {tab === 'language' && (
           <div className="bg-card border border-border rounded-lg p-6">
             <h2 className="text-base font-display font-semibold mb-4">
-              Tungumál
+              {t('settings.title')}
             </h2>
             <div className="space-y-3">
-              <Label htmlFor="language">Veldu tungumál</Label>
+              <Label htmlFor="language">{t('settings.selectLanguage')}</Label>
               <Select
                 value={i18n.language ?? 'is'}
                 onValueChange={(value) => value && i18n.changeLanguage(value)}
               >
                 <SelectTrigger id="language" className="w-48">
-                  <SelectValue placeholder="Veldu tungumál" />
+                  <SelectValue placeholder={t('settings.selectLanguage')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="is">Íslenska</SelectItem>

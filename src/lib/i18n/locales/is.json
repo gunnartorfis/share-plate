@@ -11,7 +11,16 @@
     "next": "Næsta",
     "submit": "Senda",
     "search": "Leita",
-    "noResults": "Engar niðurstöður"
+    "noResults": "Engar niðurstöður",
+    "update": "Uppfæra",
+    "add": "Bæta við",
+    "saving": "Vista...",
+    "changing": "Breyta...",
+    "deleteConfirm": "Eyða þessu takmörkun?",
+    "success": "Tókst",
+    "name": "Nafn",
+    "email": "Netfang",
+    "password": "Lykilorð"
   },
   "auth": {
     "login": "Innskrá",
@@ -22,7 +31,10 @@
     "confirmPassword": "Staðfesta lykilorð",
     "forgotPassword": "Gleymt lykilorð?",
     "noAccount": "Ertu ekki með aðgang?",
-    "hasAccount": "Ertu núþegar með aðgang?"
+    "hasAccount": "Ertu núþegar með aðgang?",
+    "currentPassword": "Núverandi lykilorð",
+    "newPassword": "Nýtt lykilorð",
+    "signOut": "Skrá út"
   },
   "nav": {
     "home": "Heim",
@@ -57,6 +69,31 @@
     "title": "Stillingar",
     "language": "Tungumál",
     "theme": "Þema",
-    "notifications": "Tilkynningar"
+    "notifications": "Tilkynningar",
+    "constraints": "Takmarkanir",
+    "profile": "Forstillingar",
+    "password": "Lykilorð",
+    "myConstraints": "Mínar takmarkanir",
+    "newConstraint": "Ný takmörkun",
+    "editConstraint": "Breyta",
+    "constraintName": "Nafn",
+    "constraintEmoji": "Tákn",
+    "constraintColor": "Litur",
+    "preview": "Forskoðun",
+    "dayDefaults": "Daglegar stillingar",
+    "dayDefaultsDesc": "Settu sjálfgefnar takmarkanir fyrir hvern dag. Þær nota sjálfkrafa við skipulagningu.",
+    "updateProfile": "Uppfæra forstillingar",
+    "changePassword": "Breyta lykilorði",
+    "passwordChanged": "Lykilorð breytt",
+    "selectLanguage": "Veldu tungumál"
+  },
+  "days": {
+    "monday": "Mánudagur",
+    "tuesday": "Þriðjudagur",
+    "wednesday": "Miðvikudagur",
+    "thursday": "Fimmtudagur",
+    "friday": "Föstudagur",
+    "saturday": "Laugardagur",
+    "sunday": "Sunnudagur"
   }
 }

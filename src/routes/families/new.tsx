@@ -1,14 +1,16 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
-import { createGroup } from '@/lib/server/groups'
+import { createFamily } from '@/lib/server/families'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export const Route = createFileRoute('/groups/new')({ component: NewGroupPage })
+export const Route = createFileRoute('/families/new')({
+  component: NewFamilyPage,
+})
 
-function NewGroupPage() {
+function NewFamilyPage() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [result, setResult] = useState<{
@@ -21,7 +23,7 @@ function NewGroupPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await createGroup({ data: { name } })
+      const res = await createFamily({ data: { name } })
       setResult(res)
     } finally {
       setLoading(false)
@@ -32,7 +34,7 @@ function NewGroupPage() {
     <AppLayout>
       <div className="max-w-lg mx-auto px-6 py-8">
         <h1 className="text-3xl font-display font-bold tracking-tight mb-8">
-          Create group
+          Create family
         </h1>
 
         {result ? (
@@ -41,10 +43,10 @@ function NewGroupPage() {
               <CheckIcon className="w-6 h-6 text-primary" />
             </div>
             <h2 className="text-lg font-display font-semibold mb-1">
-              Group created!
+              Family created!
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Share this invite code with your group:
+              Share this invite code with your family:
             </p>
             <div className="bg-background border border-border rounded-lg px-6 py-4 mb-6">
               <p className="text-3xl font-mono font-bold tracking-[0.2em] text-primary">
@@ -54,22 +56,22 @@ function NewGroupPage() {
             <Button
               onClick={() =>
                 router.navigate({
-                  to: '/groups/$groupId',
-                  params: { groupId: result.id },
+                  to: '/families/$familyId',
+                  params: { familyId: result.id },
                 })
               }
             >
-              Go to group
+              Go to family
             </Button>
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="name">Group name</Label>
+                <Label htmlFor="name">Family name</Label>
                 <Input
                   id="name"
-                  placeholder="e.g. Kindergarten families"
+                  placeholder="e.g. The Smiths"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -77,7 +79,7 @@ function NewGroupPage() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating…' : 'Create group'}
+                {loading ? 'Creating…' : 'Create family'}
               </Button>
             </form>
           </div>

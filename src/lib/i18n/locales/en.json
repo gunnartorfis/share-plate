@@ -11,7 +11,16 @@
     "next": "Next",
     "submit": "Submit",
     "search": "Search",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "update": "Update",
+    "add": "Add",
+    "saving": "Saving...",
+    "changing": "Changing...",
+    "deleteConfirm": "Delete this constraint?",
+    "success": "Success",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password"
   },
   "auth": {
     "login": "Login",
@@ -22,7 +31,10 @@
     "confirmPassword": "Confirm password",
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
-    "hasAccount": "Already have an account?"
+    "hasAccount": "Already have an account?",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "signOut": "Sign out"
   },
   "nav": {
     "home": "Home",
@@ -57,6 +69,31 @@
     "title": "Settings",
     "language": "Language",
     "theme": "Theme",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "constraints": "Constraints",
+    "profile": "Profile",
+    "password": "Password",
+    "myConstraints": "My constraints",
+    "newConstraint": "New constraint",
+    "editConstraint": "Edit",
+    "constraintName": "Name",
+    "constraintEmoji": "Emoji",
+    "constraintColor": "Color",
+    "preview": "Preview",
+    "dayDefaults": "Day defaults",
+    "dayDefaultsDesc": "Set default constraints per weekday. These auto-apply when planning.",
+    "updateProfile": "Update profile",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed successfully",
+    "selectLanguage": "Select language"
+  },
+  "days": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
   }
 }

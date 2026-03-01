@@ -1,6 +1,6 @@
-import { getCookie } from "@tanstack/react-start/server"
-import { validateSession, SESSION_COOKIE } from "./session"
-import type { User } from "../db/schema"
+import { getCookie } from '@tanstack/react-start/server'
+import { SESSION_COOKIE, validateSession } from './session'
+import type { User } from '../db/schema'
 
 export async function getUser(): Promise<User | null> {
   const sessionId = getCookie(SESSION_COOKIE)

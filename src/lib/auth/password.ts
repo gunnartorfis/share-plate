@@ -1,19 +1,27 @@
 // Native Web Crypto — no deps needed
 const ITERATIONS = 100_000
 const KEY_LENGTH = 256
-const DIGEST = "SHA-256"
+const DIGEST = 'SHA-256'
 
-async function deriveKey(password: string, salt: Uint8Array): Promise<ArrayBuffer> {
+async function deriveKey(
+  password: string,
+  salt: Uint8Array,
+): Promise<ArrayBuffer> {
   const enc = new TextEncoder()
   const keyMaterial = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     enc.encode(password),
-    "PBKDF2",
+    'PBKDF2',
     false,
-    ["deriveBits"],
+    ['deriveBits'],
   )
   return crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: salt.buffer as ArrayBuffer, iterations: ITERATIONS, hash: DIGEST },
+    {
+      name: 'PBKDF2',
+      salt: salt.buffer as ArrayBuffer,
+      iterations: ITERATIONS,
+      hash: DIGEST,
+    },
     keyMaterial,
     KEY_LENGTH,
   )
@@ -21,8 +29,8 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<ArrayBuffe
 
 function toHex(buf: ArrayBuffer): string {
   return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
 function fromHex(hex: string): Uint8Array {
@@ -36,18 +44,21 @@ function fromHex(hex: string): Uint8Array {
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const hash = await deriveKey(password, salt)
-  return `${toHex(salt.buffer as ArrayBuffer)}:${toHex(hash)}`
+  return `${toHex(salt.buffer)}:${toHex(hash)}`
 }
 
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [saltHex, hashHex] = stored.split(":")
-  const salt = fromHex(saltHex!)
+export async function verifyPassword(
+  password: string,
+  stored: string,
+): Promise<boolean> {
+  const [saltHex, hashHex] = stored.split(':')
+  const salt = fromHex(saltHex)
   const hash = await deriveKey(password, salt)
   // Constant-time comparison
   const a = new Uint8Array(hash)
-  const b = fromHex(hashHex!)
+  const b = fromHex(hashHex)
   if (a.length !== b.length) return false
   let diff = 0
-  for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
   return diff === 0
 }

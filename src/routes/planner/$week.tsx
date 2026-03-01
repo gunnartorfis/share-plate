@@ -1,12 +1,13 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import {   useEffect, useState } from 'react'
-import type {Dispatch, SetStateAction} from 'react';
+import { useEffect, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import type { Constraint } from '@/lib/db/schema'
 import { AppLayout } from '@/components/layout/app-layout'
 import {
   currentWeekStart,
   getMealPlan,
   getPastMealNames,
+  getPastRecipeUrls,
   isoWeek,
   sharePlan,
   unsharePlan,
@@ -68,6 +69,7 @@ type DrawerFormProps = {
   editConstraintIds: Array<string>
   setEditConstraintIds: Dispatch<SetStateAction<Array<string>>>
   pastMealNames: Array<string>
+  pastRecipeUrls: Array<string>
   constraints: Array<Constraint>
   saving: boolean
   onSave: () => void
@@ -85,6 +87,7 @@ function DrawerForm({
   editConstraintIds,
   setEditConstraintIds,
   pastMealNames,
+  pastRecipeUrls,
   constraints,
   saving,
   onSave,
@@ -143,16 +146,28 @@ function DrawerForm({
         </div>
 
         <div>
-          <label className="text-sm font-medium mb-1.5 block">
-            Recipe URL
-          </label>
-          <input
-            type="url"
-            className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            placeholder="https://…"
+          <label className="text-sm font-medium mb-1.5 block">Recipe URL</label>
+          <Combobox
             value={editRecipeUrl}
-            onChange={(e) => setEditRecipeUrl(e.target.value)}
-          />
+            onValueChange={(v) => setEditRecipeUrl(v ?? '')}
+          >
+            <ComboboxInput
+              className="w-full rounded-md"
+              placeholder="https://…"
+              showTrigger={false}
+              onChange={(e) => setEditRecipeUrl(e.target.value)}
+            />
+            <ComboboxContent>
+              <ComboboxList>
+                {pastRecipeUrls.map((url) => (
+                  <ComboboxItem key={url} value={url}>
+                    {url}
+                  </ComboboxItem>
+                ))}
+              </ComboboxList>
+              <ComboboxEmpty>No previous recipe URLs</ComboboxEmpty>
+            </ComboboxContent>
+          </Combobox>
         </div>
 
         {constraints.length > 0 && (
@@ -222,6 +237,7 @@ function PlannerPage() {
   >([])
   const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([])
   const [pastMealNames, setPastMealNames] = useState<Array<string>>([])
+  const [pastRecipeUrls, setPastRecipeUrls] = useState<Array<string>>([])
   const [editingDay, setEditingDay] = useState<number | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -232,13 +248,15 @@ function PlannerPage() {
   const [editConstraintIds, setEditConstraintIds] = useState<Array<string>>([])
 
   async function load() {
-    const [planData, cs, templates, gs, pastNames] = await Promise.all([
-      getMealPlan({ data: { weekStart } }),
-      getMyConstraints(),
-      getDayTemplates(),
-      getMyGroups(),
-      getPastMealNames(),
-    ])
+    const [planData, cs, templates, gs, pastNames, pastUrls] =
+      await Promise.all([
+        getMealPlan({ data: { weekStart } }),
+        getMyConstraints(),
+        getDayTemplates(),
+        getMyGroups(),
+        getPastMealNames(),
+        getPastRecipeUrls(),
+      ])
     setState(planData as PlannerState)
     setConstraints(cs)
     setDayTemplates(
@@ -249,6 +267,7 @@ function PlannerPage() {
     )
     setGroups(gs)
     setPastMealNames(pastNames)
+    setPastRecipeUrls(pastUrls)
   }
 
   useEffect(() => {
@@ -628,6 +647,7 @@ function PlannerPage() {
               editConstraintIds={editConstraintIds}
               setEditConstraintIds={setEditConstraintIds}
               pastMealNames={pastMealNames}
+              pastRecipeUrls={pastRecipeUrls}
               constraints={constraints}
               saving={saving}
               onSave={saveDay}
@@ -648,6 +668,7 @@ function PlannerPage() {
               editConstraintIds={editConstraintIds}
               setEditConstraintIds={setEditConstraintIds}
               pastMealNames={pastMealNames}
+              pastRecipeUrls={pastRecipeUrls}
               constraints={constraints}
               saving={saving}
               onSave={saveDay}

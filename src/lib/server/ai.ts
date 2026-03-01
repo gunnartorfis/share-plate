@@ -1,22 +1,38 @@
-import { createServerFn } from "@tanstack/react-start"
-import { GoogleGenerativeAI } from "@google/generative-ai"
-import { db } from "../db"
-import { dayTemplates, constraints, groupMembers, groupLinks, recipeLinks } from "../db/schema"
-import { eq, inArray } from "drizzle-orm"
-import { getUser } from "../auth/get-user"
-import { upsertDayPlan } from "./meal-plans"
-import { z } from "zod"
+import { createServerFn } from '@tanstack/react-start'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { eq, inArray } from 'drizzle-orm'
+import { z } from 'zod'
+import { db } from '../db'
+import {
+  constraints,
+  dayTemplates,
+  groupLinks,
+  groupMembers,
+  recipeLinks,
+} from '../db/schema'
+import { getUser } from '../auth/get-user'
+import { upsertDayPlan } from './meal-plans'
 
-const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+const DAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+]
 
-export const generateMealPlan = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ weekStart: z.string() }).parse(data))
+export const generateMealPlan = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) =>
+    z.object({ weekStart: z.string() }).parse(data),
+  )
   .handler(async ({ data }) => {
     const user = await getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error('Unauthorized')
 
-    const apiKey = process.env["GEMINI_API_KEY"]
-    if (!apiKey) throw new Error("GEMINI_API_KEY not configured")
+    const apiKey = process.env['GEMINI_API_KEY']
+    if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
 
     // Load user constraints and day templates
     const userConstraints = await db
@@ -35,10 +51,10 @@ export const generateMealPlan = createServerFn({ method: "POST" })
     const dayConstraintLines = DAY_NAMES.map((name, i) => {
       const tpl = templates.find((t) => t.dayOfWeek === i)
       if (!tpl) return `  ${name}: (no constraints)`
-      const ids = JSON.parse(tpl.constraintIds) as string[]
-      const names = ids.map((id) => constraintMap.get(id) ?? id).join(", ")
-      return `  ${name}: ${names || "(no constraints)"}`
-    }).join("\n")
+      const ids = JSON.parse(tpl.constraintIds) as Array<string>
+      const names = ids.map((id) => constraintMap.get(id) ?? id).join(', ')
+      return `  ${name}: ${names || '(no constraints)'}`
+    }).join('\n')
 
     // Load group recipe links for inspiration
     const memberships = await db
@@ -46,7 +62,7 @@ export const generateMealPlan = createServerFn({ method: "POST" })
       .from(groupMembers)
       .where(eq(groupMembers.userId, user.id))
 
-    let linkLines = ""
+    let linkLines = ''
     if (memberships.length > 0) {
       const groupIds = memberships.map((m) => m.groupId)
       const gLinks = await db
@@ -57,16 +73,16 @@ export const generateMealPlan = createServerFn({ method: "POST" })
 
       if (gLinks.length > 0) {
         linkLines =
-          "\n\nAvailable recipe links (for inspiration, optional):\n" +
-          gLinks.map(({ rl }) => `  - ${rl.title}: ${rl.url}`).join("\n")
+          '\n\nAvailable recipe links (for inspiration, optional):\n' +
+          gLinks.map(({ rl }) => `  - ${rl.title}: ${rl.url}`).join('\n')
       }
     }
 
-    const weekDate = new Date(data.weekStart + "T12:00:00")
+    const weekDate = new Date(data.weekStart + 'T12:00:00')
     const endDate = new Date(weekDate)
     endDate.setDate(weekDate.getDate() + 6)
     const fmt = (d: Date) =>
-      d.toLocaleDateString("en-GB", { day: "numeric", month: "long" })
+      d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
 
     const prompt = `You are a dinner planning assistant helping a family plan their week.
 Week: ${fmt(weekDate)} – ${fmt(endDate)}
@@ -92,13 +108,13 @@ Respond ONLY with valid JSON in this exact format, no other text:
 day 0 = Monday, day 6 = Sunday.`
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
     const result = await model.generateContent(prompt)
     const text = result.response.text()
 
     // Parse JSON from response
     const jsonMatch = text.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) throw new Error("AI returned invalid response")
+    if (!jsonMatch) throw new Error('AI returned invalid response')
 
     const parsed = JSON.parse(jsonMatch[0]) as Array<{
       day: number
