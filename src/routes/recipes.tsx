@@ -31,6 +31,7 @@ type RecipeMetadata = {
   title?: string
   description?: string
   image?: string
+  keywords?: string | string[]
   recipe?: {
     name?: string
     description?: string
@@ -136,6 +137,14 @@ function RecipesPage() {
           }
           if (!tagsStr && result.recipe?.keywords) {
             const keywords = result.recipe.keywords
+            if (typeof keywords === 'string') {
+              setTagsStr(keywords)
+            } else if (Array.isArray(keywords)) {
+              setTagsStr(keywords.join(', '))
+            }
+          }
+          if (!tagsStr && result.keywords) {
+            const keywords = result.keywords
             if (typeof keywords === 'string') {
               setTagsStr(keywords)
             } else if (Array.isArray(keywords)) {

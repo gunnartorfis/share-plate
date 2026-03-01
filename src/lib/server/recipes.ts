@@ -260,6 +260,28 @@ export const fetchRecipeMetadata = createServerFn({ method: 'POST' })
           : new URL(image, data.url).href
       }
 
+      const metaKeywords = getMetaContent('keywords')
+      if (metaKeywords) {
+        metadata.keywords = metaKeywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean)
+      }
+
+      const categoryMatch = html.match(/category["\s:=]+([^<>"']+)/i)
+      if (categoryMatch) {
+        const cats = categoryMatch[1]
+          .split(/[,;]/)
+          .map((c: string) => c.trim())
+          .filter(Boolean)
+        if (cats.length > 0) {
+          metadata.keywords = [
+            ...((metadata.keywords as string[]) || []),
+            ...cats,
+          ]
+        }
+      }
+
       const recipeJsonLd = html.match(
         /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i,
       )
