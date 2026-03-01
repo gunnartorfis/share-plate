@@ -45,7 +45,6 @@
   "nav": {
     "home": "Heim",
     "planner": "Matseðill",
-    "families": "Fjölskyldur",
     "groups": "Hópar",
     "recipes": "Uppskriftir",
     "constraints": "Takmarkanir",
@@ -53,7 +52,22 @@
   },
   "home": {
     "title": "Share Plate",
-    "subtitle": "Skipuleggðu máltíðir saman"
+    "subtitle": "Skipuleggðu máltíðir saman",
+    "inviteCode": "Boðskóði:",
+    "copied": "Afritað!",
+    "leave": "Yfirgefa heimili",
+    "leaveConfirm": "Yfirgefa þetta heimili?",
+    "members": "Meðlimir",
+    "membersLabel": "Meðlimir:",
+    "planner": "Matseðill",
+    "membersTab": "Meðlimir",
+    "weekOf": "Vika",
+    "mealName": "Heiti máltíðar",
+    "notes": "Athugasemdir",
+    "recipeUrl": "Recipe URL",
+    "saving": "Vista...",
+    "tapToAdd": "Smelltu til að bæta við",
+    "clickToAdd": "Smelltu til að bæta við"
   },
   "planner": {
     "title": "Matseðill",
@@ -115,49 +129,6 @@
       "feed": "Fæða",
       "recipes": "Uppskriftir",
       "members": "Meðlimir"
-    },
-    "familyTabs": {
-      "planner": "Matseðill",
-      "members": "Meðlimir"
-    }
-  },
-  "families": {
-    "title": "Fjölskyldur",
-    "create": "Búa til fjölskyldu",
-    "join": "Ganga í fjölskyldu",
-    "joinTitle": "Ganga í fjölskyldu",
-    "leave": "Yfirgefa fjölskyldu",
-    "leaveConfirm": "Yfirgefa þessa fjölskyldu?",
-    "members": "Meðlimir",
-    "membersLabel": "Meðlimir:",
-    "name": "Nafn fjölskyldu",
-    "namePlaceholder": "t.d. Jónssonarnir",
-    "description": "Lýsing",
-    "noFamilies": "Engar fjölskyldur",
-    "noFamiliesDesc": "Búðu til fjölskyldu eða gengtu í fjölskyldu með boðskóða.",
-    "inviteCode": "Boðskóði:",
-    "code": "Kóði:",
-    "admin": "Stjórnandi",
-    "member": "Meðlimur",
-    "created": "Fjölskylda búin til!",
-    "shareCode": "Deildu þessum boðskóða með fjölskyldunni þinni:",
-    "goToFamily": "Fara í fjölskyldu",
-    "enterCode": "Sláðu inn boðskóða…",
-    "joining": "Gengur í fjölskyldu…",
-    "planner": {
-      "weekOf": "Vika af",
-      "typeFamilyName": "Sláðu inn nafn fjölskyldu...",
-      "share": "Deila",
-      "sharedWithYou": "Deilt með þér",
-      "remove": "Fjarlægja",
-      "mealName": "Nafn máltíðar",
-      "notes": "Athugasemdir",
-      "recipeUrl": "Recipe URL",
-      "saving": "Vista...",
-      "save": "Vista",
-      "cancel": "Hætta við",
-      "tapToAdd": "Smelltu til að bæta við",
-      "clickToAdd": "Smelltu til að bæta við"
     }
   },
   "recipes": {

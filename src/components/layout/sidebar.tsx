@@ -26,7 +26,7 @@ import {
 
 const NAV = [
   { to: '/planner', labelKey: 'nav.planner', icon: CalendarIcon },
-  { to: '/families', labelKey: 'nav.families', icon: FamilyIcon },
+  { to: '/home', labelKey: 'nav.home', icon: HomeIcon },
   { to: '/groups', labelKey: 'nav.groups', icon: UsersIcon },
   { to: '/recipes', labelKey: 'nav.recipes', icon: RecipeIcon },
   { to: '/constraints', labelKey: 'nav.constraints', icon: ConstraintsIcon },
@@ -222,6 +222,28 @@ function CalendarIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+function HomeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.75}
+    >
+      <path
+        d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polyline
+        points="9 22 9 12 15 12 15 22"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 function UsersIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -240,25 +262,6 @@ function UsersIcon({ className }: { className?: string }) {
         d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.87"
         strokeLinecap="round"
       />
-    </svg>
-  )
-}
-function FamilyIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.75}
-    >
-      <path
-        d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-        strokeLinecap="round"
-      />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" strokeLinecap="round" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
     </svg>
   )
 }
@@ -292,7 +295,7 @@ function ConstraintsIcon({ className }: { className?: string }) {
     >
       <path d="M9 11l3 3L22 4" strokeLinecap="round" strokeLinejoin="round" />
       <path
-        d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+        d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
         strokeLinecap="round"
       />
     </svg>

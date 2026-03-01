@@ -45,7 +45,6 @@
   "nav": {
     "home": "Home",
     "planner": "Planner",
-    "families": "Families",
     "groups": "Groups",
     "recipes": "Recipes",
     "constraints": "Constraints",
@@ -53,7 +52,22 @@
   },
   "home": {
     "title": "Share Plate",
-    "subtitle": "Plan meals together"
+    "subtitle": "Plan meals together",
+    "inviteCode": "Invite code:",
+    "copied": "Copied!",
+    "leave": "Leave home",
+    "leaveConfirm": "Leave this home?",
+    "members": "Members",
+    "membersLabel": "Members:",
+    "planner": "Planner",
+    "membersTab": "Members",
+    "weekOf": "Week of",
+    "mealName": "Meal name",
+    "notes": "Notes",
+    "recipeUrl": "Recipe URL",
+    "saving": "Saving...",
+    "tapToAdd": "Tap to add",
+    "clickToAdd": "Click to add"
   },
   "planner": {
     "title": "Meal Planner",
@@ -115,49 +129,6 @@
       "feed": "Feed",
       "recipes": "Recipes",
       "members": "Members"
-    },
-    "familyTabs": {
-      "planner": "Planner",
-      "members": "Members"
-    }
-  },
-  "families": {
-    "title": "Families",
-    "create": "Create family",
-    "join": "Join family",
-    "joinTitle": "Join a family",
-    "leave": "Leave family",
-    "leaveConfirm": "Leave this family?",
-    "members": "Members",
-    "membersLabel": "Members:",
-    "name": "Family name",
-    "namePlaceholder": "e.g. The Smiths",
-    "description": "Description",
-    "noFamilies": "No families yet",
-    "noFamiliesDesc": "Create a family or join one with an invite code.",
-    "inviteCode": "Invite code:",
-    "code": "Code:",
-    "admin": "Admin",
-    "member": "Member",
-    "created": "Family created!",
-    "shareCode": "Share this invite code with your family:",
-    "goToFamily": "Go to family",
-    "enterCode": "Enter invite code…",
-    "joining": "Joining…",
-    "planner": {
-      "weekOf": "Week of",
-      "typeFamilyName": "Type family name...",
-      "share": "Share",
-      "sharedWithYou": "Shared with you",
-      "remove": "Remove",
-      "mealName": "Meal name",
-      "notes": "Notes",
-      "recipeUrl": "Recipe URL",
-      "saving": "Saving...",
-      "save": "Save",
-      "cancel": "Cancel",
-      "tapToAdd": "Tap to add",
-      "clickToAdd": "Click to add"
     }
   },
   "recipes": {

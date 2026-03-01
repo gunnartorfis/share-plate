@@ -127,8 +127,8 @@ export const dayTemplates = sqliteTable('day_templates', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  dayOfWeek: integer('day_of_week').notNull(), // 0=Mon, 6=Sun
-  constraintIds: text('constraint_ids').notNull().default('[]'), // JSON array
+  dayOfWeek: integer('day_of_week').notNull(),
+  constraintIds: text('constraint_ids').notNull().default('[]'),
 })
 
 export const recipeLinks = sqliteTable('recipe_links', {
@@ -139,8 +139,8 @@ export const recipeLinks = sqliteTable('recipe_links', {
   title: text('title').notNull(),
   url: text('url'),
   description: text('description'),
-  metadata: text('metadata'), // JSON string with structured recipe metadata
-  tags: text('tags').notNull().default('[]'), // JSON array
+  metadata: text('metadata'),
+  tags: text('tags').notNull().default('[]'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -166,7 +166,7 @@ export const mealPlans = sqliteTable('meal_plans', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  weekStart: text('week_start').notNull(), // ISO date string "YYYY-MM-DD" (always Monday)
+  weekStart: text('week_start').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -177,11 +177,11 @@ export const dayPlans = sqliteTable('day_plans', {
   mealPlanId: text('meal_plan_id')
     .notNull()
     .references(() => mealPlans.id, { onDelete: 'cascade' }),
-  dayOfWeek: integer('day_of_week').notNull(), // 0=Mon, 6=Sun
+  dayOfWeek: integer('day_of_week').notNull(),
   mealName: text('meal_name'),
   notes: text('notes'),
   recipeUrl: text('recipe_url'),
-  constraintIds: text('constraint_ids').notNull().default('[]'), // JSON array
+  constraintIds: text('constraint_ids').notNull().default('[]'),
 })
 
 export const planShares = sqliteTable('plan_shares', {

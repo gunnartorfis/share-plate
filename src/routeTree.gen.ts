@@ -11,8 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LinksRouteImport } from './routes/links'
+import { Route as HomeRouteImport } from './routes/home'
 import { Route as ConstraintsRouteImport } from './routes/constraints'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlannerIndexRouteImport } from './routes/planner/index'
@@ -34,14 +35,19 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecipesRoute = RecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LinksRoute = LinksRouteImport.update({
-  id: '/links',
-  path: '/links',
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConstraintsRoute = ConstraintsRouteImport.update({
@@ -98,8 +104,9 @@ const FamiliesFamilyIdRoute = FamiliesFamilyIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/constraints': typeof ConstraintsRoute
-  '/links': typeof LinksRoute
+  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/recipes': typeof RecipesRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/families/$familyId': typeof FamiliesFamilyIdRoute
@@ -114,8 +121,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/constraints': typeof ConstraintsRoute
-  '/links': typeof LinksRoute
+  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/recipes': typeof RecipesRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/families/$familyId': typeof FamiliesFamilyIdRoute
@@ -131,8 +139,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/constraints': typeof ConstraintsRoute
-  '/links': typeof LinksRoute
+  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/recipes': typeof RecipesRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/families/$familyId': typeof FamiliesFamilyIdRoute
@@ -149,8 +158,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/constraints'
-    | '/links'
+    | '/home'
     | '/login'
+    | '/recipes'
     | '/register'
     | '/settings'
     | '/families/$familyId'
@@ -165,8 +175,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/constraints'
-    | '/links'
+    | '/home'
     | '/login'
+    | '/recipes'
     | '/register'
     | '/settings'
     | '/families/$familyId'
@@ -181,8 +192,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/constraints'
-    | '/links'
+    | '/home'
     | '/login'
+    | '/recipes'
     | '/register'
     | '/settings'
     | '/families/$familyId'
@@ -198,8 +210,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConstraintsRoute: typeof ConstraintsRoute
-  LinksRoute: typeof LinksRoute
+  HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  RecipesRoute: typeof RecipesRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   FamiliesFamilyIdRoute: typeof FamiliesFamilyIdRoute
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recipes': {
+      id: '/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -235,11 +255,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/links': {
-      id: '/links'
-      path: '/links'
-      fullPath: '/links'
-      preLoaderRoute: typeof LinksRouteImport
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/constraints': {
@@ -318,8 +338,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConstraintsRoute: ConstraintsRoute,
-  LinksRoute: LinksRoute,
+  HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  RecipesRoute: RecipesRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   FamiliesFamilyIdRoute: FamiliesFamilyIdRoute,
