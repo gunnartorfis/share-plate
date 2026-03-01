@@ -1,8 +1,9 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { changePassword, logout, updateProfile } from '@/lib/server/auth'
+import { getMyFamilies, leaveFamily } from '@/lib/server/families'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,12 +17,17 @@ import {
 
 export const Route = createFileRoute('/settings')({ component: SettingsPage })
 
+type Family = { id: string; name: string; inviteCode: string; role: string }
+
 function SettingsPage() {
   const router = useRouter()
   const { t, i18n } = useTranslation()
-  const [tab, setTab] = useState<'profile' | 'password' | 'language'>(
+  const [tab, setTab] = useState<'profile' | 'password' | 'language' | 'homes'>(
     'language',
   )
+
+  const [families, setFamilies] = useState<Array<Family>>([])
+  const [leaving, setLeaving] = useState<string | null>(null)
 
   const [pName, setPName] = useState('')
   const [pEmail, setPEmail] = useState('')
@@ -73,6 +79,27 @@ function SettingsPage() {
     router.navigate({ to: '/login' })
   }
 
+  useEffect(() => {
+    async function loadFamilies() {
+      const fs = await getMyFamilies()
+      setFamilies(fs as Array<Family>)
+    }
+    loadFamilies()
+  }, [])
+
+  async function handleLeaveFamily(familyId: string) {
+    if (!confirm(t('home.leaveConfirm'))) return
+    setLeaving(familyId)
+    try {
+      await leaveFamily({ data: { familyId } })
+      await router.invalidate()
+      const fs = await getMyFamilies()
+      setFamilies(fs as Array<Family>)
+    } finally {
+      setLeaving(null)
+    }
+  }
+
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-6 py-8">
@@ -81,19 +108,21 @@ function SettingsPage() {
         </h1>
 
         <div className="flex gap-1 mb-6 border-b border-border">
-          {(['profile', 'password', 'language'] as const).map((key) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-                tab === key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t(`settings.${key}`)}
-            </button>
-          ))}
+          {(['profile', 'password', 'language', 'homes'] as const).map(
+            (key) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+                  tab === key
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {key === 'homes' ? t('settings.homes') : t(`settings.${key}`)}
+              </button>
+            ),
+          )}
         </div>
 
         {tab === 'profile' && (
@@ -201,6 +230,42 @@ function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        )}
+
+        {tab === 'homes' && (
+          <div className="space-y-3">
+            {families.length === 0 ? (
+              <div className="bg-card border border-border rounded-lg p-6 text-center">
+                <p className="text-muted-foreground">{t('settings.noHomes')}</p>
+              </div>
+            ) : (
+              families.map((family) => (
+                <div
+                  key={family.id}
+                  className="flex items-center justify-between bg-card border border-border rounded-lg p-4"
+                >
+                  <div>
+                    <p className="font-medium">{family.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('families.code')}{' '}
+                      <span className="font-mono">{family.inviteCode}</span>
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLeaveFamily(family.id)}
+                    disabled={leaving === family.id}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    {leaving === family.id
+                      ? t('common.saving')
+                      : t('home.leave')}
+                  </Button>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

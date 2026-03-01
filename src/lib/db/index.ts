@@ -1,5 +1,5 @@
 import initSqlJs, { Database as SqlJsDatabase } from 'sql.js'
-import { drizzle } from 'drizzle-orm/sql.js'
+import { drizzle } from 'drizzle-orm/sql-js'
 import * as schema from './schema'
 import fs from 'node:fs'
 import path from 'node:path'

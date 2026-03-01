@@ -169,6 +169,8 @@
     "constraints": "Constraints",
     "profile": "Profile",
     "password": "Password",
+    "homes": "Homes",
+    "noHomes": "No homes",
     "defaultConstraints": "Defaults",
     "defaultConstraintsDesc": "Click to add common constraints or create your own",
     "myConstraints": "My constraints",
@@ -211,7 +213,6 @@
     "defaults": {
       "fish": "Fish",
       "simple": "Simple",
-      "quick": "Quick",
       "vegetarian": "Vegetarian",
       "vegan": "Vegan",
       "healthy": "Healthy",

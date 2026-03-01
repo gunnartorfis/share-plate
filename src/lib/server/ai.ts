@@ -10,11 +10,11 @@ import {
   groupFamilies,
   recipeLinks,
   familyMembers,
-  mealPlans,
-  dayPlans,
+  familyMealPlans,
+  familyDayPlans,
 } from '../db/schema'
 import { getUser } from '../auth/get-user'
-import { upsertDayPlan } from './meal-plans'
+import { upsertHomeDayPlan } from './homes'
 
 const DAY_NAMES = [
   'Monday',
@@ -39,7 +39,16 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
 
     const db = await getDbWithSchema()
 
-    // Load user constraints and day templates
+    // Get user's family membership
+    const userFamilies = await db
+      .select({ familyId: familyMembers.familyId })
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    const userFamilyId = userFamilies[0]?.familyId
+    if (!userFamilyId) throw new Error('Not a member of any home')
+
+    // Load family constraints and day templates (using user's personal constraints for now)
     const userConstraints = await db
       .select()
       .from(constraints)
@@ -58,23 +67,26 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
       userConstraints.filter((c) => c.type === 'new').map((c) => c.id),
     )
 
-    // Load user's meal history for the "new" constraint
+    // Load family's meal history for the "new" constraint
     let historyLines = ''
     if (newConstraintIds.size > 0) {
       const pastPlans = await db
-        .select({ mp: mealPlans, dp: dayPlans })
-        .from(mealPlans)
-        .innerJoin(dayPlans, eq(dayPlans.mealPlanId, mealPlans.id))
-        .where(eq(mealPlans.userId, user.id))
-        .orderBy(mealPlans.createdAt)
+        .select({ fmp: familyMealPlans, fdp: familyDayPlans })
+        .from(familyMealPlans)
+        .innerJoin(
+          familyDayPlans,
+          eq(familyDayPlans.familyMealPlanId, familyMealPlans.id),
+        )
+        .where(eq(familyMealPlans.familyId, userFamilyId))
+        .orderBy(familyMealPlans.createdAt)
         .limit(50)
 
       const mealNames = [
-        ...new Set(pastPlans.map((p) => p.dp.mealName).filter(Boolean)),
+        ...new Set(pastPlans.map((p) => p.fdp.mealName).filter(Boolean)),
       ]
       if (mealNames.length > 0) {
         historyLines =
-          '\n\nMEAL HISTORY - The user has already had these dinners (avoid repeating for "something new" constraints):\n' +
+          '\n\nMEAL HISTORY - The family has already had these dinners (avoid repeating for "something new" constraints):\n' +
           mealNames.map((m) => `  - ${m}`).join('\n')
       }
     }
@@ -100,13 +112,6 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
     }).join('\n')
 
     // Load group recipe links for inspiration
-    const userFamilies = await db
-      .select({ familyId: familyMembers.familyId })
-      .from(familyMembers)
-      .where(eq(familyMembers.userId, user.id))
-      .limit(1)
-    const userFamilyId = userFamilies[0]?.familyId
-
     let linkLines = ''
     if (userFamilyId) {
       const memberships = await db
@@ -176,13 +181,12 @@ day 0 = Monday, day 6 = Sunday.`
 
     // Upsert each day plan
     for (const item of parsed) {
-      await upsertDayPlan({
+      await upsertHomeDayPlan({
         data: {
           weekStart: data.weekStart,
           dayOfWeek: item.day,
           mealName: item.meal_name,
           constraintIds: [],
-          recipeLinkId: null,
         },
       })
     }

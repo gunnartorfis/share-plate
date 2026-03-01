@@ -1,12 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, desc, isNotNull } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import {
   familyMembers,
   families,
   familyMealPlans,
   familyDayPlans,
+  familyShares,
   users,
 } from '../db/schema'
 import { getUser } from '../auth/get-user'
@@ -23,7 +24,7 @@ function generateInviteCode(): string {
 }
 
 export const getMyHome = createServerFn({ method: 'GET' }).handler(async () => {
-  const db = await db
+  const db = await getDbWithSchema()
   const user = await getUser()
   if (!user) throw new Error('Unauthorized')
 
@@ -65,7 +66,7 @@ export const createHome = createServerFn({ method: 'POST' })
     z.object({ name: z.string().min(1) }).parse(data),
   )
   .handler(async ({ data }) => {
-    const db = await db
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -99,7 +100,7 @@ export const joinHome = createServerFn({ method: 'POST' })
     z.object({ inviteCode: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
-    const db = await db
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -143,7 +144,7 @@ export const updateHomeName = createServerFn({ method: 'POST' })
     z.object({ name: z.string().min(1) }).parse(data),
   )
   .handler(async ({ data }) => {
-    const db = await db
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -165,7 +166,7 @@ export const updateHomeName = createServerFn({ method: 'POST' })
 
 export const leaveHome = createServerFn({ method: 'POST' }).handler(
   async () => {
-    const db = await db
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -207,7 +208,7 @@ export const getHomeMealPlan = createServerFn({ method: 'GET' })
     z.object({ weekStart: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
-    const db = await db
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -273,7 +274,7 @@ const UpsertHomeDayInput = z.object({
 export const upsertHomeDayPlan = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) => UpsertHomeDayInput.parse(data))
   .handler(async ({ data }) => {
-    const db = await db
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -345,3 +346,231 @@ export const upsertHomeDayPlan = createServerFn({ method: 'POST' })
 
     return { success: true }
   })
+
+export const getHomeMealPlanWithSharing = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) =>
+    z.object({ weekStart: z.string() }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const membership = await db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    if (!membership[0]) throw new Error('Not a member of any home')
+
+    let plan = await db
+      .select()
+      .from(familyMealPlans)
+      .where(
+        and(
+          eq(familyMealPlans.familyId, membership[0].familyId),
+          eq(familyMealPlans.weekStart, data.weekStart),
+        ),
+      )
+      .limit(1)
+
+    if (!plan[0]) {
+      const id = uid()
+      await db.insert(familyMealPlans).values({
+        id,
+        familyId: membership[0].familyId,
+        weekStart: data.weekStart,
+      })
+      plan = [
+        {
+          id,
+          familyId: membership[0].familyId,
+          weekStart: data.weekStart,
+          createdAt: new Date(),
+        },
+      ]
+    }
+
+    const days = await db
+      .select()
+      .from(familyDayPlans)
+      .where(eq(familyDayPlans.familyMealPlanId, plan[0].id))
+
+    const sharedFamilies = await db
+      .select({ familyId: familyShares.sharedWithFamilyId })
+      .from(familyShares)
+      .where(eq(familyShares.familyMealPlanId, plan[0].id))
+
+    return {
+      plan: plan[0],
+      days: days.map((d) => ({
+        ...d,
+        constraintIds: JSON.parse(d.constraintIds) as Array<string>,
+      })),
+      role: membership[0].role,
+      sharedFamilyIds: sharedFamilies.map((s) => s.familyId),
+    }
+  })
+
+export const shareHomeMealPlan = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) =>
+    z
+      .object({ weekStart: z.string(), sharedWithFamilyId: z.string() })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const membership = await db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    if (!membership[0]) throw new Error('Not a member of any home')
+
+    const plan = await db
+      .select()
+      .from(familyMealPlans)
+      .where(
+        and(
+          eq(familyMealPlans.familyId, membership[0].familyId),
+          eq(familyMealPlans.weekStart, data.weekStart),
+        ),
+      )
+      .limit(1)
+
+    if (!plan[0]) throw new Error('Meal plan not found')
+
+    await db
+      .insert(familyShares)
+      .values({
+        familyMealPlanId: plan[0].id,
+        sharedWithFamilyId: data.sharedWithFamilyId,
+      })
+      .onConflictDoNothing()
+  })
+
+export const unshareHomeMealPlan = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) =>
+    z
+      .object({ weekStart: z.string(), sharedWithFamilyId: z.string() })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const membership = await db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    if (!membership[0]) throw new Error('Not a member of any home')
+
+    const plan = await db
+      .select()
+      .from(familyMealPlans)
+      .where(
+        and(
+          eq(familyMealPlans.familyId, membership[0].familyId),
+          eq(familyMealPlans.weekStart, data.weekStart),
+        ),
+      )
+      .limit(1)
+
+    if (!plan[0]) return
+
+    await db
+      .delete(familyShares)
+      .where(
+        and(
+          eq(familyShares.familyMealPlanId, plan[0].id),
+          eq(familyShares.sharedWithFamilyId, data.sharedWithFamilyId),
+        ),
+      )
+  })
+
+export const getPastHomeMealNames = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const membership = await db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    if (!membership[0]) return []
+
+    const rows = await db
+      .select({ mealName: familyDayPlans.mealName })
+      .from(familyDayPlans)
+      .innerJoin(
+        familyMealPlans,
+        eq(familyDayPlans.familyMealPlanId, familyMealPlans.id),
+      )
+      .where(
+        and(
+          eq(familyMealPlans.familyId, membership[0].familyId),
+          isNotNull(familyDayPlans.mealName),
+        ),
+      )
+      .orderBy(desc(familyMealPlans.weekStart))
+
+    const seen = new Set<string>()
+    return rows
+      .filter((r) => {
+        if (r.mealName && !seen.has(r.mealName)) {
+          seen.add(r.mealName)
+          return true
+        }
+        return false
+      })
+      .map((r) => r.mealName as string)
+  },
+)
+
+export const getPastHomeRecipeUrls = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const membership = await db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    if (!membership[0]) return []
+
+    const rows = await db
+      .select({ recipeUrl: familyDayPlans.recipeUrl })
+      .from(familyDayPlans)
+      .innerJoin(
+        familyMealPlans,
+        eq(familyDayPlans.familyMealPlanId, familyMealPlans.id),
+      )
+      .where(
+        and(
+          eq(familyMealPlans.familyId, membership[0].familyId),
+          isNotNull(familyDayPlans.recipeUrl),
+        ),
+      )
+      .orderBy(desc(familyMealPlans.weekStart))
+
+    const seen = new Set<string>()
+    return rows
+      .filter((r) => {
+        if (r.recipeUrl && !seen.has(r.recipeUrl)) {
+          seen.add(r.recipeUrl)
+          return true
+        }
+        return false
+      })
+      .map((r) => r.recipeUrl as string)
+  },
+)

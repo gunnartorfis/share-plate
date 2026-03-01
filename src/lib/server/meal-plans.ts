@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import {
   dayPlans,
   familyDayPlans,
@@ -54,6 +54,7 @@ export function isoWeek(weekStart: string): string {
 }
 
 async function ensureMealPlan(userId: string, weekStart: string) {
+  const db = await getDbWithSchema()
   const existing = await db
     .select()
     .from(mealPlans)
@@ -74,6 +75,7 @@ export const getMealPlan = createServerFn({ method: 'GET' })
     z.object({ weekStart: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -110,6 +112,7 @@ const UpsertDayInput = z.object({
 export const upsertDayPlan = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) => UpsertDayInput.parse(data))
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -153,6 +156,7 @@ export const sharePlan = createServerFn({ method: 'POST' })
     z.object({ weekStart: z.string(), groupId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -169,6 +173,7 @@ export const unsharePlan = createServerFn({ method: 'POST' })
     z.object({ weekStart: z.string(), groupId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -197,6 +202,7 @@ export const unsharePlan = createServerFn({ method: 'POST' })
 
 export const getPastMealNames = createServerFn({ method: 'GET' }).handler(
   async () => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -222,6 +228,7 @@ export const getPastMealNames = createServerFn({ method: 'GET' }).handler(
 
 export const getPastRecipeUrls = createServerFn({ method: 'GET' }).handler(
   async () => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -250,6 +257,7 @@ export const getGroupFeed = createServerFn({ method: 'GET' })
     z.object({ groupId: z.string(), weekStart: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 

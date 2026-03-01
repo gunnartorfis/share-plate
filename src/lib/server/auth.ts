@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-start/server'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import { users } from '../db/schema'
 import { hashPassword, verifyPassword } from '../auth/password'
 import { SESSION_COOKIE, createSession, deleteSession } from '../auth/session'
@@ -25,6 +25,7 @@ export const login = createServerFn({ method: 'POST' })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const [user] = await db
       .select()
       .from(users)
@@ -57,6 +58,7 @@ export const register = createServerFn({ method: 'POST' })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const existing = await db
       .select()
       .from(users)
@@ -94,6 +96,7 @@ export const updateProfile = createServerFn({ method: 'POST' })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
     await db
@@ -109,6 +112,7 @@ export const changePassword = createServerFn({ method: 'POST' })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 

@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import { groupFamilies, groups, families, familyMembers } from '../db/schema'
 import { getUser } from '../auth/get-user'
 
@@ -17,6 +17,7 @@ function generateInviteCode(): string {
 }
 
 async function getUserFamilyId(userId: string): Promise<string | null> {
+  const db = await getDbWithSchema()
   const userFamilies = await db
     .select({ familyId: familyMembers.familyId })
     .from(familyMembers)
@@ -27,6 +28,7 @@ async function getUserFamilyId(userId: string): Promise<string | null> {
 
 export const getMyGroups = createServerFn({ method: 'GET' }).handler(
   async () => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -48,6 +50,7 @@ export const createGroup = createServerFn({ method: 'POST' })
     z.object({ name: z.string().min(1) }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -72,6 +75,7 @@ export const joinGroup = createServerFn({ method: 'POST' })
     z.object({ inviteCode: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -111,6 +115,7 @@ export const getGroup = createServerFn({ method: 'GET' })
     z.object({ groupId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -157,6 +162,7 @@ export const leaveGroup = createServerFn({ method: 'POST' })
     z.object({ groupId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 

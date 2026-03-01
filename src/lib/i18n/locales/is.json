@@ -169,6 +169,8 @@
     "constraints": "Takmarkanir",
     "profile": "Forstillingar",
     "password": "Lykilorð",
+    "homes": "Heimili",
+    "noHomes": "Engin heimili",
     "defaultConstraints": "Sjálfgefnar",
     "defaultConstraintsDesc": "Smelltu til að bæta við almennum takmörkunum eða búa til þínar eigin",
     "myConstraints": "Mínar takmarkanir",
@@ -211,7 +213,6 @@
     "defaults": {
       "fish": "Fiskur",
       "simple": "Einfalt",
-      "quick": "Fljótgt",
       "vegetarian": "Grænmetis",
       "vegan": "Vegan",
       "healthy": "Hollur",

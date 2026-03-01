@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import { familyMembers, families, users } from '../db/schema'
 import { getUser } from '../auth/get-user'
 
@@ -18,6 +18,7 @@ function generateInviteCode(): string {
 
 export const getMyFamilies = createServerFn({ method: 'GET' }).handler(
   async () => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -36,6 +37,7 @@ export const createFamily = createServerFn({ method: 'POST' })
     z.object({ name: z.string().min(1) }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -57,6 +59,7 @@ export const joinFamily = createServerFn({ method: 'POST' })
     z.object({ inviteCode: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -93,6 +96,7 @@ export const getFamily = createServerFn({ method: 'GET' })
     z.object({ familyId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -137,6 +141,7 @@ export const leaveFamily = createServerFn({ method: 'POST' })
     z.object({ familyId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
     await db

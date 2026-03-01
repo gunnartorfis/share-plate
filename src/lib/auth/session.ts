@@ -1,5 +1,5 @@
 import { and, eq, gt } from 'drizzle-orm'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import { sessions, users } from '../db/schema'
 import type { User } from '../db/schema'
 
@@ -14,6 +14,7 @@ function generateId(length = 32): string {
 }
 
 export async function createSession(userId: string): Promise<string> {
+  const db = await getDbWithSchema()
   const id = generateId()
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
   await db.insert(sessions).values({ id, userId, expiresAt })
@@ -23,6 +24,7 @@ export async function createSession(userId: string): Promise<string> {
 export async function validateSession(
   sessionId: string,
 ): Promise<{ user: User; sessionId: string } | null> {
+  const db = await getDbWithSchema()
   const now = new Date()
   const rows = await db
     .select({ session: sessions, user: users })
@@ -48,5 +50,6 @@ export async function validateSession(
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
+  const db = await getDbWithSchema()
   await db.delete(sessions).where(eq(sessions.id, sessionId))
 }

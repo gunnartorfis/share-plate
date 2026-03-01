@@ -13,13 +13,10 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as HomeRouteImport } from './routes/home'
 import { Route as ConstraintsRouteImport } from './routes/constraints'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as PlannerIndexRouteImport } from './routes/planner/index'
+import { Route as IndexRouteImport } from './routes/_index'
 import { Route as GroupsIndexRouteImport } from './routes/groups/index'
 import { Route as FamiliesIndexRouteImport } from './routes/families/index'
-import { Route as PlannerWeekRouteImport } from './routes/planner/$week'
 import { Route as GroupsNewRouteImport } from './routes/groups/new'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as FamiliesNewRouteImport } from './routes/families/new'
@@ -45,24 +42,13 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeRoute = HomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ConstraintsRoute = ConstraintsRouteImport.update({
   id: '/constraints',
   path: '/constraints',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlannerIndexRoute = PlannerIndexRouteImport.update({
-  id: '/planner/',
-  path: '/planner/',
+  id: '/_index',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GroupsIndexRoute = GroupsIndexRouteImport.update({
@@ -73,11 +59,6 @@ const GroupsIndexRoute = GroupsIndexRouteImport.update({
 const FamiliesIndexRoute = FamiliesIndexRouteImport.update({
   id: '/families/',
   path: '/families/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlannerWeekRoute = PlannerWeekRouteImport.update({
-  id: '/planner/$week',
-  path: '/planner/$week',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GroupsNewRoute = GroupsNewRouteImport.update({
@@ -104,7 +85,6 @@ const FamiliesFamilyIdRoute = FamiliesFamilyIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/constraints': typeof ConstraintsRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/recipes': typeof RecipesRoute
   '/register': typeof RegisterRoute
@@ -113,15 +93,12 @@ export interface FileRoutesByFullPath {
   '/families/new': typeof FamiliesNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
-  '/planner/$week': typeof PlannerWeekRoute
   '/families/': typeof FamiliesIndexRoute
   '/groups/': typeof GroupsIndexRoute
-  '/planner/': typeof PlannerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/constraints': typeof ConstraintsRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/recipes': typeof RecipesRoute
   '/register': typeof RegisterRoute
@@ -130,16 +107,13 @@ export interface FileRoutesByTo {
   '/families/new': typeof FamiliesNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
-  '/planner/$week': typeof PlannerWeekRoute
   '/families': typeof FamiliesIndexRoute
   '/groups': typeof GroupsIndexRoute
-  '/planner': typeof PlannerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_index': typeof IndexRoute
   '/constraints': typeof ConstraintsRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/recipes': typeof RecipesRoute
   '/register': typeof RegisterRoute
@@ -148,17 +122,14 @@ export interface FileRoutesById {
   '/families/new': typeof FamiliesNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
-  '/planner/$week': typeof PlannerWeekRoute
   '/families/': typeof FamiliesIndexRoute
   '/groups/': typeof GroupsIndexRoute
-  '/planner/': typeof PlannerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/constraints'
-    | '/home'
     | '/login'
     | '/recipes'
     | '/register'
@@ -167,15 +138,12 @@ export interface FileRouteTypes {
     | '/families/new'
     | '/groups/$groupId'
     | '/groups/new'
-    | '/planner/$week'
     | '/families/'
     | '/groups/'
-    | '/planner/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/constraints'
-    | '/home'
     | '/login'
     | '/recipes'
     | '/register'
@@ -184,15 +152,12 @@ export interface FileRouteTypes {
     | '/families/new'
     | '/groups/$groupId'
     | '/groups/new'
-    | '/planner/$week'
     | '/families'
     | '/groups'
-    | '/planner'
   id:
     | '__root__'
-    | '/'
+    | '/_index'
     | '/constraints'
-    | '/home'
     | '/login'
     | '/recipes'
     | '/register'
@@ -201,16 +166,13 @@ export interface FileRouteTypes {
     | '/families/new'
     | '/groups/$groupId'
     | '/groups/new'
-    | '/planner/$week'
     | '/families/'
     | '/groups/'
-    | '/planner/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConstraintsRoute: typeof ConstraintsRoute
-  HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   RecipesRoute: typeof RecipesRoute
   RegisterRoute: typeof RegisterRoute
@@ -219,10 +181,8 @@ export interface RootRouteChildren {
   FamiliesNewRoute: typeof FamiliesNewRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   GroupsNewRoute: typeof GroupsNewRoute
-  PlannerWeekRoute: typeof PlannerWeekRoute
   FamiliesIndexRoute: typeof FamiliesIndexRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
-  PlannerIndexRoute: typeof PlannerIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -255,13 +215,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/home': {
-      id: '/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/constraints': {
       id: '/constraints'
       path: '/constraints'
@@ -269,18 +222,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConstraintsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_index': {
+      id: '/_index'
+      path: ''
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/planner/': {
-      id: '/planner/'
-      path: '/planner'
-      fullPath: '/planner/'
-      preLoaderRoute: typeof PlannerIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/groups/': {
@@ -295,13 +241,6 @@ declare module '@tanstack/react-router' {
       path: '/families'
       fullPath: '/families/'
       preLoaderRoute: typeof FamiliesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/planner/$week': {
-      id: '/planner/$week'
-      path: '/planner/$week'
-      fullPath: '/planner/$week'
-      preLoaderRoute: typeof PlannerWeekRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/groups/new': {
@@ -338,7 +277,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConstraintsRoute: ConstraintsRoute,
-  HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   RecipesRoute: RecipesRoute,
   RegisterRoute: RegisterRoute,
@@ -347,10 +285,8 @@ const rootRouteChildren: RootRouteChildren = {
   FamiliesNewRoute: FamiliesNewRoute,
   GroupsGroupIdRoute: GroupsGroupIdRoute,
   GroupsNewRoute: GroupsNewRoute,
-  PlannerWeekRoute: PlannerWeekRoute,
   FamiliesIndexRoute: FamiliesIndexRoute,
   GroupsIndexRoute: GroupsIndexRoute,
-  PlannerIndexRoute: PlannerIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

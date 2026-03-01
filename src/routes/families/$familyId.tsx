@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
-import { getFamily, leaveFamily, getMyFamilies } from '@/lib/server/families'
+import { getFamily, getMyFamilies } from '@/lib/server/families'
 import { currentWeekStart } from '@/lib/server/meal-plans'
 import {
   getFamilyMealPlan,
@@ -72,7 +72,6 @@ function FamilyPage() {
     Array<{ id: string; name: string }>
   >([])
   const [tab, setTab] = useState<'planner' | 'members'>('planner')
-  const [leaving, setLeaving] = useState(false)
   const [editingDay, setEditingDay] = useState<number | null>(null)
   const [editForm, setEditForm] = useState({
     mealName: '',
@@ -162,13 +161,6 @@ function FamilyPage() {
     await load()
   }
 
-  async function handleLeave() {
-    if (!confirm(t('families.leaveConfirm'))) return
-    setLeaving(true)
-    await leaveFamily({ data: { familyId } })
-    router.navigate({ to: '/families' })
-  }
-
   if (!family || !mealPlan) {
     return (
       <AppLayout>
@@ -199,14 +191,6 @@ function FamilyPage() {
               </span>
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLeave}
-            disabled={leaving}
-          >
-            {t('families.leave')}
-          </Button>
         </div>
 
         {/* Tabs */}

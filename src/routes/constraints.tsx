@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import EmojiPicker from 'emoji-picker-react'
 import { AppLayout } from '@/components/layout/app-layout'
 import {
   deleteConstraint,
@@ -41,31 +42,104 @@ const PRESET_COLORS = [
   '#795548',
 ]
 
+const DEFAULT_CONSTRAINTS: Array<{
+  id: string
+  nameKey: string
+  emoji: string
+  color: string
+}> = [
+  {
+    id: 'preset-fish',
+    nameKey: 'constraints.defaults.fish',
+    emoji: '🐟',
+    color: '#3498db',
+  },
+  {
+    id: 'preset-simple',
+    nameKey: 'constraints.defaults.simple',
+    emoji: '✨',
+    color: '#9b59b6',
+  },
+  {
+    id: 'preset-vegetarian',
+    nameKey: 'constraints.defaults.vegetarian',
+    emoji: '🥗',
+    color: '#2ecc71',
+  },
+  {
+    id: 'preset-vegan',
+    nameKey: 'constraints.defaults.vegan',
+    emoji: '🌱',
+    color: '#27ae60',
+  },
+  {
+    id: 'preset-healthy',
+    nameKey: 'constraints.defaults.healthy',
+    emoji: '🥦',
+    color: '#1abc9c',
+  },
+  {
+    id: 'preset-comfort',
+    nameKey: 'constraints.defaults.comfort',
+    emoji: '🍲',
+    color: '#e67e22',
+  },
+  {
+    id: 'preset-kid-friendly',
+    nameKey: 'constraints.defaults.kidFriendly',
+    emoji: '👶',
+    color: '#e91e63',
+  },
+  {
+    id: 'preset-new',
+    nameKey: 'constraints.defaults.new',
+    emoji: '🆕',
+    color: '#8e44ad',
+  },
+]
+
 type Constraint = {
   id: string
   name: string
   color: string
   emoji: string | null
+  isPreset?: boolean
 }
 
 function ConstraintsPage() {
   const { t } = useTranslation()
-  const [constraints, setConstraints] = useState<Array<Constraint>>([])
+  const [customConstraints, setCustomConstraints] = useState<Array<Constraint>>(
+    [],
+  )
   const [templates, setTemplates] = useState<
     Array<{ dayOfWeek: number; constraintIds: Array<string> }>
   >([])
 
-  const [editingConstraint, setEditingConstraint] = useState<Constraint | null>(
-    null,
-  )
+  const [showModal, setShowModal] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [cName, setCName] = useState('')
   const [cColor, setCColor] = useState(PRESET_COLORS[0])
   const [cEmoji, setCEmoji] = useState('')
   const [cSaving, setCsaving] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
+
+  const [openDay, setOpenDay] = useState<number | null>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  const presets: Array<Constraint> = DEFAULT_CONSTRAINTS.map((dc) => ({
+    id: dc.id,
+    name: t(dc.nameKey),
+    emoji: dc.emoji,
+    color: dc.color,
+    isPreset: true,
+  }))
+
+  const allConstraints = [...presets, ...customConstraints]
 
   async function loadConstraints() {
     const [cs, ts] = await Promise.all([getMyConstraints(), getDayTemplates()])
-    setConstraints(cs)
+    setCustomConstraints(cs as Array<Constraint>)
     setTemplates(
       ts.map((t) => ({
         dayOfWeek: t.dayOfWeek,
@@ -78,18 +152,72 @@ function ConstraintsPage() {
     loadConstraints()
   }, [])
 
+  useEffect(() => {
+    if (openDay === null) return
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node)
+      ) {
+        setOpenDay(null)
+      }
+    }
+
+    setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 0)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [openDay])
+
+  useEffect(() => {
+    if (!showEmojiPicker || !emojiPickerRef.current) return
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false)
+      }
+    }
+
+    setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 0)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showEmojiPicker])
+
   function openNewConstraint() {
-    setEditingConstraint(null)
+    setEditingId(null)
     setCName('')
-    setCColor(PRESET_COLORS[0])
+    setCColor(PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)])
     setCEmoji('')
+    setShowModal(true)
   }
 
   function openEditConstraint(c: Constraint) {
-    setEditingConstraint(c)
+    if (c.isPreset) return
+    setEditingId(c.id)
     setCName(c.name)
     setCColor(c.color)
     setCEmoji(c.emoji ?? '')
+    setShowModal(true)
+    setOpenDay(null)
+  }
+
+  function closeModal() {
+    setShowModal(false)
+    setEditingId(null)
+    setCName('')
+    setCEmoji('')
+    setShowEmojiPicker(false)
   }
 
   async function handleSaveConstraint(e: React.FormEvent) {
@@ -98,15 +226,13 @@ function ConstraintsPage() {
     try {
       await saveConstraint({
         data: {
-          id: editingConstraint?.id,
+          id: editingId ?? undefined,
           name: cName,
           color: cColor,
           emoji: cEmoji || undefined,
         },
       })
-      setEditingConstraint(null)
-      setCName('')
-      setCEmoji('')
+      closeModal()
       await loadConstraints()
     } finally {
       setCsaving(false)
@@ -126,25 +252,130 @@ function ConstraintsPage() {
       ? current.filter((id) => id !== constraintId)
       : [...current, constraintId]
     await saveDayTemplate({ data: { dayOfWeek, constraintIds: next } })
+    setOpenDay(null)
     await loadConstraints()
   }
 
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-display font-bold tracking-tight mb-8">
-          {t('settings.constraints')}
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-display font-bold tracking-tight">
+            {t('settings.constraints')}
+          </h1>
+          <Button onClick={openNewConstraint} size="sm">
+            + {t('constraints.defaults.create')}
+          </Button>
+        </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div>
-            <h2 className="text-base font-display font-semibold mb-4">
-              {t('settings.myConstraints')}
+            <h2 className="text-base font-display font-semibold mb-1">
+              {t('settings.dayDefaults')}
             </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('settings.dayDefaultsDesc')}
+            </p>
+            <div className="space-y-3">
+              {DAY_KEYS.map((dayKey, i) => {
+                const template = templates.find((t) => t.dayOfWeek === i)
+                const activeIds = template?.constraintIds ?? []
+                return (
+                  <div key={i} className="relative">
+                    <div className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3">
+                      <span className="text-sm font-medium w-24 shrink-0">
+                        {t(dayKey)}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {allConstraints
+                          .filter((c) => activeIds.includes(c.id))
+                          .map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => toggleDayConstraint(i, c.id)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border transition-all"
+                              style={{
+                                backgroundColor: c.color + '22',
+                                color: c.color,
+                                borderColor: c.color + '55',
+                              }}
+                            >
+                              {c.emoji && <span>{c.emoji}</span>}
+                              {c.name}
+                              <span className="ml-0.5">×</span>
+                            </button>
+                          ))}
+                        <div
+                          className="relative"
+                          ref={openDay === i ? popoverRef : null}
+                        >
+                          <button
+                            onClick={() => setOpenDay(openDay === i ? null : i)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border border-dashed text-muted-foreground hover:bg-muted/50 transition-all"
+                          >
+                            +
+                          </button>
+                          {openDay === i && (
+                            <div className="absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-lg shadow-lg p-2 min-w-[180px]">
+                              <div className="text-xs font-medium text-muted-foreground px-2 py-1 mb-1">
+                                {t('settings.constraintName')}
+                              </div>
+                              {allConstraints.map((c) => {
+                                const isActive = activeIds.includes(c.id)
+                                return (
+                                  <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      toggleDayConstraint(i, c.id)
+                                    }}
+                                    className={cn(
+                                      'w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-all hover:bg-muted',
+                                      isActive && 'opacity-50',
+                                    )}
+                                    style={{ color: c.color }}
+                                  >
+                                    <span>{c.emoji}</span>
+                                    <span className="flex-1">{c.name}</span>
+                                    {isActive && <span>✓</span>}
+                                  </button>
+                                )
+                              })}
+                              <div className="border-t mt-2 pt-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setOpenDay(null)
+                                    openNewConstraint()
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left hover:bg-muted text-muted-foreground"
+                                >
+                                  <span>+</span>
+                                  <span>
+                                    {t('constraints.defaults.create')}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
 
-            {constraints.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {constraints.map((c) => (
+          {customConstraints.length > 0 && (
+            <div>
+              <h2 className="text-base font-display font-semibold mb-4">
+                {t('settings.myConstraints')}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {customConstraints.map((c) => (
                   <div
                     key={c.id}
                     className="group flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium cursor-pointer"
@@ -169,12 +400,20 @@ function ConstraintsPage() {
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+        </div>
 
-            <div className="bg-card border border-border rounded-lg p-5">
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={closeModal}
+            />
+            <div className="relative bg-card border border-border rounded-lg p-5 w-full max-w-md mx-4 shadow-lg">
               <h3 className="text-sm font-semibold mb-4">
-                {editingConstraint
-                  ? `${t('settings.editConstraint')} "${editingConstraint.name}"`
+                {editingId
+                  ? `${t('settings.editConstraint')} "${cName}"`
                   : t('settings.newConstraint')}
               </h3>
               <form onSubmit={handleSaveConstraint} className="space-y-4">
@@ -189,20 +428,36 @@ function ConstraintsPage() {
                       onChange={(e) => setCName(e.target.value)}
                       placeholder={t('settings.constraintPlaceholder')}
                       required
+                      autoFocus
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="cemoji">
-                      {t('settings.constraintEmoji')}
-                    </Label>
-                    <Input
-                      id="cemoji"
-                      value={cEmoji}
-                      onChange={(e) => setCEmoji(e.target.value)}
-                      placeholder="🐟"
-                      className="w-20"
-                      maxLength={2}
-                    />
+                    <Label>{t('settings.constraintEmoji')}</Label>
+                    <div className="relative" ref={emojiPickerRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className="h-9 w-20 inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                      >
+                        {cEmoji || '😀'}
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="absolute top-full left-0 mt-2 z-50">
+                          <div
+                            className="fixed inset-0"
+                            onClick={() => setShowEmojiPicker(false)}
+                          />
+                          <EmojiPicker
+                            onEmojiClick={(e) => {
+                              setCEmoji(e.emoji)
+                              setShowEmojiPicker(false)
+                            }}
+                            skinTonesDisabled
+                            previewConfig={{ showPreview: false }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -247,20 +502,14 @@ function ConstraintsPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2">
-                  {editingConstraint && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={openNewConstraint}
-                    >
-                      {t('common.create')}
-                    </Button>
-                  )}
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={closeModal}>
+                    {t('common.cancel')}
+                  </Button>
                   <Button type="submit" disabled={cSaving}>
                     {cSaving
                       ? t('common.saving')
-                      : editingConstraint
+                      : editingId
                         ? t('common.update')
                         : t('common.add')}
                   </Button>
@@ -268,60 +517,7 @@ function ConstraintsPage() {
               </form>
             </div>
           </div>
-
-          {constraints.length > 0 && (
-            <div>
-              <h2 className="text-base font-display font-semibold mb-1">
-                {t('settings.dayDefaults')}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('settings.dayDefaultsDesc')}
-              </p>
-              <div className="space-y-3">
-                {DAY_KEYS.map((dayKey, i) => {
-                  const template = templates.find(
-                    (templateItem) => templateItem.dayOfWeek === i,
-                  )
-                  const activeIds = template?.constraintIds ?? []
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3"
-                    >
-                      <span className="text-sm font-medium w-24 shrink-0">
-                        {t(dayKey)}
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {constraints.map((c) => {
-                          const active = activeIds.includes(c.id)
-                          return (
-                            <button
-                              key={c.id}
-                              onClick={() => toggleDayConstraint(i, c.id)}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border transition-all"
-                              style={
-                                active
-                                  ? {
-                                      backgroundColor: c.color + '22',
-                                      color: c.color,
-                                      borderColor: c.color + '55',
-                                    }
-                                  : {}
-                              }
-                            >
-                              {c.emoji && <span>{c.emoji}</span>}
-                              {c.name}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </AppLayout>
   )

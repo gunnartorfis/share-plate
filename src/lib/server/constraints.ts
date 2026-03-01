@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import { constraints, dayTemplates } from '../db/schema'
 import { getUser } from '../auth/get-user'
 
@@ -11,6 +11,7 @@ function uid() {
 
 export const getMyConstraints = createServerFn({ method: 'GET' }).handler(
   async () => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
     return db.select().from(constraints).where(eq(constraints.userId, user.id))
@@ -27,6 +28,7 @@ const SaveConstraintInput = z.object({
 export const saveConstraint = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) => SaveConstraintInput.parse(data))
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
@@ -54,6 +56,7 @@ export const saveConstraint = createServerFn({ method: 'POST' })
 export const deleteConstraint = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
     await db
@@ -63,6 +66,7 @@ export const deleteConstraint = createServerFn({ method: 'POST' })
 
 export const getDayTemplates = createServerFn({ method: 'GET' }).handler(
   async () => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
     return db
@@ -80,6 +84,7 @@ const SaveDayTemplateInput = z.object({
 export const saveDayTemplate = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) => SaveDayTemplateInput.parse(data))
   .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
