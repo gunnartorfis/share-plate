@@ -1,16 +1,15 @@
-import { createServerFn } from "@tanstack/react-start"
-import { db } from "../db"
+import { createServerFn } from '@tanstack/react-start'
+import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm'
+import { z } from 'zod'
+import { db } from '../db'
 import {
-  mealPlans,
   dayPlans,
-  planShares,
   groupMembers,
+  mealPlans,
+  planShares,
   users,
-  recipeLinks,
-} from "../db/schema"
-import { eq, and, inArray } from "drizzle-orm"
-import { getUser } from "../auth/get-user"
-import { z } from "zod"
+} from '../db/schema'
+import { getUser } from '../auth/get-user'
 
 function uid() {
   return crypto.randomUUID()
@@ -29,32 +28,34 @@ export function currentWeekStart(): string {
 export function weekStartFromParam(param: string): string {
   // Accept "YYYY-WXX" or "YYYY-MM-DD"
   if (/^\d{4}-W\d{2}$/.test(param)) {
-    const [year, week] = param.split("-W").map(Number)
-    const jan4 = new Date(year!, 0, 4)
+    const [year, week] = param.split('-W').map(Number)
+    const jan4 = new Date(year, 0, 4)
     const startOfWeek1 = new Date(jan4)
     startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7))
     const mon = new Date(startOfWeek1)
-    mon.setDate(startOfWeek1.getDate() + (week! - 1) * 7)
+    mon.setDate(startOfWeek1.getDate() + (week - 1) * 7)
     return mon.toISOString().slice(0, 10)
   }
   return param
 }
 
 export function isoWeek(weekStart: string): string {
-  const d = new Date(weekStart + "T12:00:00")
+  const d = new Date(weekStart + 'T12:00:00')
   const year = d.getFullYear()
   const jan1 = new Date(year, 0, 1)
   const week = Math.ceil(
     ((d.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7,
   )
-  return `${year}-W${String(week).padStart(2, "0")}`
+  return `${year}-W${String(week).padStart(2, '0')}`
 }
 
 async function ensureMealPlan(userId: string, weekStart: string) {
   const existing = await db
     .select()
     .from(mealPlans)
-    .where(and(eq(mealPlans.userId, userId), eq(mealPlans.weekStart, weekStart)))
+    .where(
+      and(eq(mealPlans.userId, userId), eq(mealPlans.weekStart, weekStart)),
+    )
     .limit(1)
 
   if (existing[0]) return existing[0]
@@ -64,24 +65,19 @@ async function ensureMealPlan(userId: string, weekStart: string) {
   return { id, userId, weekStart, createdAt: new Date() }
 }
 
-export const getMealPlan = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ weekStart: z.string() }).parse(data))
+export const getMealPlan = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) =>
+    z.object({ weekStart: z.string() }).parse(data),
+  )
   .handler(async ({ data }) => {
     const user = await getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error('Unauthorized')
 
     const plan = await ensureMealPlan(user.id, data.weekStart)
     const days = await db
       .select()
       .from(dayPlans)
       .where(eq(dayPlans.mealPlanId, plan.id))
-
-    // Fetch recipe link details for days that have one
-    const linkIds = days.map((d) => d.recipeLinkId).filter(Boolean) as string[]
-    const links =
-      linkIds.length > 0
-        ? await db.select().from(recipeLinks).where(inArray(recipeLinks.id, linkIds))
-        : []
 
     const sharedGroups = await db
       .select({ groupId: planShares.groupId })
@@ -92,8 +88,7 @@ export const getMealPlan = createServerFn({ method: "GET" })
       plan: { ...plan },
       days: days.map((d) => ({
         ...d,
-        constraintIds: JSON.parse(d.constraintIds) as string[],
-        recipeLink: links.find((l) => l.id === d.recipeLinkId) ?? null,
+        constraintIds: JSON.parse(d.constraintIds) as Array<string>,
       })),
       sharedGroupIds: sharedGroups.map((s) => s.groupId),
     }
@@ -104,33 +99,41 @@ const UpsertDayInput = z.object({
   dayOfWeek: z.number().min(0).max(6),
   mealName: z.string().optional(),
   notes: z.string().optional(),
-  recipeLinkId: z.string().optional().nullable(),
+  recipeUrl: z.string().optional().nullable(),
   constraintIds: z.array(z.string()),
 })
 
-export const upsertDayPlan = createServerFn({ method: "POST" })
+export const upsertDayPlan = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) => UpsertDayInput.parse(data))
   .handler(async ({ data }) => {
     const user = await getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error('Unauthorized')
 
     const plan = await ensureMealPlan(user.id, data.weekStart)
 
     const existing = await db
       .select()
       .from(dayPlans)
-      .where(and(eq(dayPlans.mealPlanId, plan.id), eq(dayPlans.dayOfWeek, data.dayOfWeek)))
+      .where(
+        and(
+          eq(dayPlans.mealPlanId, plan.id),
+          eq(dayPlans.dayOfWeek, data.dayOfWeek),
+        ),
+      )
       .limit(1)
 
     const payload = {
       mealName: data.mealName ?? null,
       notes: data.notes ?? null,
-      recipeLinkId: data.recipeLinkId ?? null,
+      recipeUrl: data.recipeUrl ?? null,
       constraintIds: JSON.stringify(data.constraintIds),
     }
 
     if (existing[0]) {
-      await db.update(dayPlans).set(payload).where(eq(dayPlans.id, existing[0].id))
+      await db
+        .update(dayPlans)
+        .set(payload)
+        .where(eq(dayPlans.id, existing[0].id))
     } else {
       await db.insert(dayPlans).values({
         id: uid(),
@@ -141,13 +144,13 @@ export const upsertDayPlan = createServerFn({ method: "POST" })
     }
   })
 
-export const sharePlan = createServerFn({ method: "POST" })
+export const sharePlan = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) =>
     z.object({ weekStart: z.string(), groupId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
     const user = await getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error('Unauthorized')
 
     const plan = await ensureMealPlan(user.id, data.weekStart)
 
@@ -157,18 +160,23 @@ export const sharePlan = createServerFn({ method: "POST" })
       .onConflictDoNothing()
   })
 
-export const unsharePlan = createServerFn({ method: "POST" })
+export const unsharePlan = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) =>
     z.object({ weekStart: z.string(), groupId: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
     const user = await getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error('Unauthorized')
 
     const plan = await db
       .select()
       .from(mealPlans)
-      .where(and(eq(mealPlans.userId, user.id), eq(mealPlans.weekStart, data.weekStart)))
+      .where(
+        and(
+          eq(mealPlans.userId, user.id),
+          eq(mealPlans.weekStart, data.weekStart),
+        ),
+      )
       .limit(1)
 
     if (!plan[0]) return
@@ -176,26 +184,57 @@ export const unsharePlan = createServerFn({ method: "POST" })
     await db
       .delete(planShares)
       .where(
-        and(eq(planShares.mealPlanId, plan[0].id), eq(planShares.groupId, data.groupId)),
+        and(
+          eq(planShares.mealPlanId, plan[0].id),
+          eq(planShares.groupId, data.groupId),
+        ),
       )
   })
 
-export const getGroupFeed = createServerFn({ method: "GET" })
+export const getPastMealNames = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const rows = await db
+      .select({ mealName: dayPlans.mealName })
+      .from(dayPlans)
+      .innerJoin(mealPlans, eq(dayPlans.mealPlanId, mealPlans.id))
+      .where(and(eq(mealPlans.userId, user.id), isNotNull(dayPlans.mealName)))
+      .orderBy(desc(mealPlans.weekStart))
+
+    const seen = new Set<string>()
+    return rows
+      .filter((r) => {
+        if (r.mealName && !seen.has(r.mealName)) {
+          seen.add(r.mealName)
+          return true
+        }
+        return false
+      })
+      .map((r) => r.mealName as string)
+  },
+)
+
+export const getGroupFeed = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
     z.object({ groupId: z.string(), weekStart: z.string() }).parse(data),
   )
   .handler(async ({ data }) => {
     const user = await getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error('Unauthorized')
 
     const membership = await db
       .select()
       .from(groupMembers)
       .where(
-        and(eq(groupMembers.groupId, data.groupId), eq(groupMembers.userId, user.id)),
+        and(
+          eq(groupMembers.groupId, data.groupId),
+          eq(groupMembers.userId, user.id),
+        ),
       )
       .limit(1)
-    if (!membership[0]) throw new Error("Not a member")
+    if (!membership[0]) throw new Error('Not a member')
 
     // Get all members of the group
     const members = await db
@@ -210,20 +249,19 @@ export const getGroupFeed = createServerFn({ method: "GET" })
       .from(planShares)
       .innerJoin(mealPlans, eq(planShares.mealPlanId, mealPlans.id))
       .where(
-        and(eq(planShares.groupId, data.groupId), eq(mealPlans.weekStart, data.weekStart)),
+        and(
+          eq(planShares.groupId, data.groupId),
+          eq(mealPlans.weekStart, data.weekStart),
+        ),
       )
 
     const planIds = sharedPlans.map((p) => p.plan.id)
     const allDays =
       planIds.length > 0
-        ? await db.select().from(dayPlans).where(inArray(dayPlans.mealPlanId, planIds))
-        : []
-
-    // Link recipe details
-    const linkIds = allDays.map((d) => d.recipeLinkId).filter(Boolean) as string[]
-    const links =
-      linkIds.length > 0
-        ? await db.select().from(recipeLinks).where(inArray(recipeLinks.id, linkIds))
+        ? await db
+            .select()
+            .from(dayPlans)
+            .where(inArray(dayPlans.mealPlanId, planIds))
         : []
 
     return members.map(({ user: member }) => {
@@ -233,8 +271,7 @@ export const getGroupFeed = createServerFn({ method: "GET" })
             .filter((d) => d.mealPlanId === memberPlan.plan.id)
             .map((d) => ({
               ...d,
-              constraintIds: JSON.parse(d.constraintIds) as string[],
-              recipeLink: links.find((l) => l.id === d.recipeLinkId) ?? null,
+              constraintIds: JSON.parse(d.constraintIds) as Array<string>,
             }))
         : []
 

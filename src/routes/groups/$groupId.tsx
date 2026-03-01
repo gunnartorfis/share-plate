@@ -1,18 +1,17 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router"
-import { useState, useEffect } from "react"
-import { AppLayout } from "@/components/layout/app-layout"
-import { getGroup, leaveGroup } from "@/lib/server/groups"
-import { getGroupFeed } from "@/lib/server/meal-plans"
-import { getGroupLinks, addLinkToGroup } from "@/lib/server/links"
-import { getMyLinks } from "@/lib/server/links"
-import { currentWeekStart } from "@/lib/server/meal-plans"
-import { Button } from "@/components/ui/button"
-import { Link } from "@tanstack/react-router"
-import { cn } from "@/lib/utils"
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { AppLayout } from '@/components/layout/app-layout'
+import { getGroup, leaveGroup } from '@/lib/server/groups'
+import { currentWeekStart, getGroupFeed } from '@/lib/server/meal-plans'
+import { addLinkToGroup, getGroupLinks, getMyLinks } from '@/lib/server/links'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute("/groups/$groupId")({ component: GroupPage })
+export const Route = createFileRoute('/groups/$groupId')({
+  component: GroupPage,
+})
 
-const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 function GroupPage() {
   const { groupId } = Route.useParams()
@@ -24,19 +23,34 @@ function GroupPage() {
     name: string
     inviteCode: string
     role: string
-    members: { id: string; name: string; email: string; role: string }[]
+    members: Array<{ id: string; name: string; email: string; role: string }>
   } | null>(null)
   const [feed, setFeed] = useState<
-    {
+    Array<{
       user: { id: string; name: string }
-      days: { dayOfWeek: number; mealName: string | null; recipeLink: { title: string; url: string } | null; constraintIds: string[] }[]
+      days: Array<{
+        dayOfWeek: number
+        mealName: string | null
+        recipeUrl: string | null
+        constraintIds: Array<string>
+      }>
       isMe: boolean
-    }[]
+    }>
   >([])
-  const [groupLinks, setGroupLinks] = useState<{ id: string; title: string; url: string; type: string; tags: string[] }[]>([])
-  const [myLinks, setMyLinks] = useState<{ id: string; title: string }[]>([])
-  const [tab, setTab] = useState<"feed" | "links" | "members">("feed")
-  const [addingLink, setAddingLink] = useState("")
+  const [groupLinks, setGroupLinks] = useState<
+    Array<{
+      id: string
+      title: string
+      url: string
+      type: string
+      tags: Array<string>
+    }>
+  >([])
+  const [myLinks, setMyLinks] = useState<Array<{ id: string; title: string }>>(
+    [],
+  )
+  const [tab, setTab] = useState<'feed' | 'links' | 'members'>('feed')
+  const [addingLink, setAddingLink] = useState('')
   const [leaving, setLeaving] = useState(false)
 
   async function load() {
@@ -52,25 +66,27 @@ function GroupPage() {
       setGroupLinks(gl as typeof groupLinks)
       setMyLinks(ml)
     } catch {
-      router.navigate({ to: "/groups" })
+      router.navigate({ to: '/groups' })
     }
   }
 
-  useEffect(() => { load() }, [groupId])
+  useEffect(() => {
+    load()
+  }, [groupId])
 
   async function handleAddLink() {
     if (!addingLink) return
     await addLinkToGroup({ data: { groupId, linkId: addingLink } })
-    setAddingLink("")
+    setAddingLink('')
     const gl = await getGroupLinks({ data: { groupId } })
     setGroupLinks(gl as typeof groupLinks)
   }
 
   async function handleLeave() {
-    if (!confirm("Leave this group?")) return
+    if (!confirm('Leave this group?')) return
     setLeaving(true)
     await leaveGroup({ data: { groupId } })
-    router.navigate({ to: "/groups" })
+    router.navigate({ to: '/groups' })
   }
 
   if (!group) {
@@ -83,7 +99,9 @@ function GroupPage() {
     )
   }
 
-  const linksNotInGroup = myLinks.filter((l) => !groupLinks.find((gl) => gl.id === l.id))
+  const linksNotInGroup = myLinks.filter(
+    (l) => !groupLinks.find((gl) => gl.id === l.id),
+  )
 
   return (
     <AppLayout>
@@ -91,28 +109,37 @@ function GroupPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-display font-bold tracking-tight">{group.name}</h1>
+            <h1 className="text-3xl font-display font-bold tracking-tight">
+              {group.name}
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Invite code:{" "}
-              <span className="font-mono font-semibold text-foreground">{group.inviteCode}</span>
+              Invite code:{' '}
+              <span className="font-mono font-semibold text-foreground">
+                {group.inviteCode}
+              </span>
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLeave} disabled={leaving}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLeave}
+            disabled={leaving}
+          >
             Leave group
           </Button>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-border">
-          {(["feed", "links", "members"] as const).map((t) => (
+          {(['feed', 'links', 'members'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                "px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px",
+                'px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
                 tab === t
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               {t}
@@ -121,15 +148,15 @@ function GroupPage() {
         </div>
 
         {/* Feed tab */}
-        {tab === "feed" && (
+        {tab === 'feed' && (
           <div>
             <p className="text-xs text-muted-foreground mb-4">
-              Week of{" "}
-              {new Date(weekStart + "T12:00:00").toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-              })}
-              {" "}·{" "}
+              Week of{' '}
+              {new Date(weekStart + 'T12:00:00').toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+              })}{' '}
+              ·{' '}
               <Link to="/planner" className="text-primary hover:underline">
                 Go to your planner →
               </Link>
@@ -140,8 +167,8 @@ function GroupPage() {
                 <div
                   key={user.id}
                   className={cn(
-                    "bg-card border rounded-lg overflow-hidden",
-                    isMe ? "border-primary/40" : "border-border",
+                    'bg-card border rounded-lg overflow-hidden',
+                    isMe ? 'border-primary/40' : 'border-border',
                   )}
                 >
                   {/* Member header */}
@@ -150,12 +177,14 @@ function GroupPage() {
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
                       style={{ backgroundColor: stringToColor(user.id) }}
                     >
-                      {user.name[0]!.toUpperCase()}
+                      {user.name[0].toUpperCase()}
                     </div>
                     <span className="font-medium text-sm">
                       {user.name}
                       {isMe && (
-                        <span className="ml-1.5 text-xs text-muted-foreground">(you)</span>
+                        <span className="ml-1.5 text-xs text-muted-foreground">
+                          (you)
+                        </span>
                       )}
                     </span>
                     {days.length === 0 && (
@@ -180,16 +209,18 @@ function GroupPage() {
                                 {day.mealName}
                               </p>
                             ) : (
-                              <p className="text-xs text-muted-foreground/50 italic">—</p>
+                              <p className="text-xs text-muted-foreground/50 italic">
+                                —
+                              </p>
                             )}
-                            {day?.recipeLink && (
+                            {day?.recipeUrl && (
                               <a
-                                href={day.recipeLink.url}
+                                href={day.recipeUrl}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-[10px] text-primary hover:underline truncate block mt-0.5"
                               >
-                                ↗ {day.recipeLink.title}
+                                ↗ recipe
                               </a>
                             )}
                           </div>
@@ -204,7 +235,7 @@ function GroupPage() {
         )}
 
         {/* Links tab */}
-        {tab === "links" && (
+        {tab === 'links' && (
           <div>
             {/* Add link to group */}
             {linksNotInGroup.length > 0 && (
@@ -235,7 +266,9 @@ function GroupPage() {
             {groupLinks.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p className="font-display font-medium mb-1">No links yet</p>
-                <p className="text-sm">Share your recipe links to this group.</p>
+                <p className="text-sm">
+                  Share your recipe links to this group.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -249,10 +282,10 @@ function GroupPage() {
                   >
                     <div
                       className={cn(
-                        "mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase shrink-0",
-                        link.type === "website"
-                          ? "bg-secondary text-secondary-foreground"
-                          : "bg-accent/15 text-accent",
+                        'mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase shrink-0',
+                        link.type === 'website'
+                          ? 'bg-secondary text-secondary-foreground'
+                          : 'bg-accent/15 text-accent',
                       )}
                     >
                       {link.type}
@@ -261,7 +294,9 @@ function GroupPage() {
                       <p className="font-medium text-sm group-hover:text-primary transition-colors">
                         {link.title}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{link.url}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {link.url}
+                      </p>
                       {link.tags.length > 0 && (
                         <div className="flex gap-1 mt-1.5 flex-wrap">
                           {link.tags.map((tag) => (
@@ -284,7 +319,7 @@ function GroupPage() {
         )}
 
         {/* Members tab */}
-        {tab === "members" && (
+        {tab === 'members' && (
           <div className="space-y-2">
             {group.members.map((member) => (
               <div
@@ -295,11 +330,13 @@ function GroupPage() {
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
                   style={{ backgroundColor: stringToColor(member.id) }}
                 >
-                  {member.name[0]!.toUpperCase()}
+                  {member.name[0].toUpperCase()}
                 </div>
                 <div>
                   <p className="font-medium text-sm">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">{member.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {member.email}
+                  </p>
                 </div>
                 <span className="ml-auto text-xs text-muted-foreground capitalize">
                   {member.role}
@@ -315,15 +352,33 @@ function GroupPage() {
 
 function stringToColor(str: string): string {
   let hash = 0
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  const colors = ["#4a7c59", "#c17d4a", "#7c4a6e", "#4a6e7c", "#7c7c4a", "#4a4a7c"]
-  return colors[Math.abs(hash) % colors.length]!
+  for (let i = 0; i < str.length; i++)
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  const colors = [
+    '#4a7c59',
+    '#c17d4a',
+    '#7c4a6e',
+    '#4a6e7c',
+    '#7c7c4a',
+    '#4a4a7c',
+  ]
+  return colors[Math.abs(hash) % colors.length]
 }
 
 function ExternalLinkIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }

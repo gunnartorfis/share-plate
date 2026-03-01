@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import {   useEffect, useState } from 'react'
+import type {Dispatch, SetStateAction} from 'react';
 import type { Constraint } from '@/lib/db/schema'
 import { AppLayout } from '@/components/layout/app-layout'
 import {
@@ -14,7 +15,6 @@ import {
 } from '@/lib/server/meal-plans'
 import { getDayTemplates, getMyConstraints } from '@/lib/server/constraints'
 import { getMyGroups } from '@/lib/server/groups'
-import { getMyLinks } from '@/lib/server/links'
 import { generateMealPlan } from '@/lib/server/ai'
 import { Button } from '@/components/ui/button'
 import {
@@ -47,20 +47,163 @@ type DayPlanData = {
   dayOfWeek: number
   mealName: string | null
   notes: string | null
-  recipeLinkId: string | null
+  recipeUrl: string | null
   constraintIds: Array<string>
-  recipeLink: {
-    id: string
-    title: string
-    url: string
-    tags: Array<string>
-  } | null
 }
 
 type PlannerState = {
   plan: { id: string; weekStart: string } | null
   days: Array<DayPlanData>
   sharedGroupIds: Array<string>
+}
+
+type DrawerFormProps = {
+  editingDay: number
+  editMeal: string
+  setEditMeal: (v: string) => void
+  editNotes: string
+  setEditNotes: (v: string) => void
+  editRecipeUrl: string
+  setEditRecipeUrl: (v: string) => void
+  editConstraintIds: Array<string>
+  setEditConstraintIds: Dispatch<SetStateAction<Array<string>>>
+  pastMealNames: Array<string>
+  constraints: Array<Constraint>
+  saving: boolean
+  onSave: () => void
+  onClose: () => void
+}
+
+function DrawerForm({
+  editingDay,
+  editMeal,
+  setEditMeal,
+  editNotes,
+  setEditNotes,
+  editRecipeUrl,
+  setEditRecipeUrl,
+  editConstraintIds,
+  setEditConstraintIds,
+  pastMealNames,
+  constraints,
+  saving,
+  onSave,
+  onClose,
+}: DrawerFormProps) {
+  return (
+    <>
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
+        <h2 className="text-lg font-display font-semibold">
+          {DAY_FULL[editingDay]} dinner
+        </h2>
+        <button
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1"
+        >
+          <XIcon className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-5">
+        <div>
+          <label className="text-sm font-medium mb-1.5 block">Dinner</label>
+          <Combobox
+            value={editMeal}
+            onValueChange={(v) => setEditMeal(v ?? '')}
+          >
+            <ComboboxInput
+              className="w-full rounded-md"
+              placeholder="What's for dinner?"
+              autoFocus
+              showTrigger={false}
+              onChange={(e) => setEditMeal(e.target.value)}
+            />
+            <ComboboxContent>
+              <ComboboxList>
+                {pastMealNames.map((name) => (
+                  <ComboboxItem key={name} value={name}>
+                    {name}
+                  </ComboboxItem>
+                ))}
+              </ComboboxList>
+              <ComboboxEmpty>No previous dinners</ComboboxEmpty>
+            </ComboboxContent>
+          </Combobox>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium mb-1.5 block">Notes</label>
+          <textarea
+            className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+            rows={2}
+            placeholder="Any notes…"
+            value={editNotes}
+            onChange={(e) => setEditNotes(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium mb-1.5 block">
+            Recipe URL
+          </label>
+          <input
+            type="url"
+            className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            placeholder="https://…"
+            value={editRecipeUrl}
+            onChange={(e) => setEditRecipeUrl(e.target.value)}
+          />
+        </div>
+
+        {constraints.length > 0 && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">
+              Constraints
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {constraints.map((c) => {
+                const active = editConstraintIds.includes(c.id)
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() =>
+                      setEditConstraintIds((prev) =>
+                        active
+                          ? prev.filter((id) => id !== c.id)
+                          : [...prev, c.id],
+                      )
+                    }
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium border transition-all"
+                    style={
+                      active
+                        ? {
+                            backgroundColor: c.color + '22',
+                            color: c.color,
+                            borderColor: c.color,
+                          }
+                        : {}
+                    }
+                  >
+                    {c.emoji && <span>{c.emoji}</span>}
+                    {c.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="px-5 py-4 border-t border-border flex gap-2 shrink-0">
+        <Button variant="outline" className="flex-1" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button className="flex-1" onClick={onSave} disabled={saving}>
+          {saving ? 'Saving…' : 'Save'}
+        </Button>
+      </div>
+    </>
+  )
 }
 
 function PlannerPage() {
@@ -78,9 +221,6 @@ function PlannerPage() {
     Array<{ dayOfWeek: number; constraintIds: Array<string> }>
   >([])
   const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([])
-  const [myLinks, setMyLinks] = useState<
-    Array<{ id: string; title: string; url: string; tags: Array<string> }>
-  >([])
   const [pastMealNames, setPastMealNames] = useState<Array<string>>([])
   const [editingDay, setEditingDay] = useState<number | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
@@ -88,16 +228,15 @@ function PlannerPage() {
 
   const [editMeal, setEditMeal] = useState('')
   const [editNotes, setEditNotes] = useState('')
-  const [editLinkId, setEditLinkId] = useState<string | null>(null)
+  const [editRecipeUrl, setEditRecipeUrl] = useState('')
   const [editConstraintIds, setEditConstraintIds] = useState<Array<string>>([])
 
   async function load() {
-    const [planData, cs, templates, gs, links, pastNames] = await Promise.all([
+    const [planData, cs, templates, gs, pastNames] = await Promise.all([
       getMealPlan({ data: { weekStart } }),
       getMyConstraints(),
       getDayTemplates(),
       getMyGroups(),
-      getMyLinks(),
       getPastMealNames(),
     ])
     setState(planData as PlannerState)
@@ -109,7 +248,6 @@ function PlannerPage() {
       })),
     )
     setGroups(gs)
-    setMyLinks(links)
     setPastMealNames(pastNames)
   }
 
@@ -122,7 +260,7 @@ function PlannerPage() {
     const template = dayTemplates.find((t) => t.dayOfWeek === dayOfWeek)
     setEditMeal(day?.mealName ?? '')
     setEditNotes(day?.notes ?? '')
-    setEditLinkId(day?.recipeLinkId ?? null)
+    setEditRecipeUrl(day?.recipeUrl ?? '')
     setEditConstraintIds(day?.constraintIds ?? template?.constraintIds ?? [])
     setEditingDay(dayOfWeek)
   }
@@ -137,7 +275,7 @@ function PlannerPage() {
           dayOfWeek: editingDay,
           mealName: editMeal || undefined,
           notes: editNotes || undefined,
-          recipeLinkId: editLinkId,
+          recipeUrl: editRecipeUrl || null,
           constraintIds: editConstraintIds,
         },
       })
@@ -207,134 +345,6 @@ function PlannerPage() {
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
-    )
-  }
-
-  // Shared drawer form content — rendered in both mobile bottom sheet and desktop side panel
-  function DrawerForm() {
-    if (editingDay === null) return null
-    return (
-      <>
-        <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
-          <h2 className="text-lg font-display font-semibold">
-            {DAY_FULL[editingDay]} dinner
-          </h2>
-          <button
-            onClick={() => setEditingDay(null)}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1"
-          >
-            <XIcon className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-5">
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Dinner</label>
-            <Combobox
-              value={editMeal}
-              onValueChange={(v) => setEditMeal(v ?? '')}
-            >
-              <ComboboxInput
-                className="w-full rounded-md"
-                placeholder="What's for dinner?"
-                autoFocus
-                showTrigger={false}
-                onChange={(e) => setEditMeal(e.target.value)}
-              />
-              <ComboboxContent>
-                <ComboboxList>
-                  {pastMealNames.map((name) => (
-                    <ComboboxItem key={name} value={name}>
-                      {name}
-                    </ComboboxItem>
-                  ))}
-                </ComboboxList>
-                <ComboboxEmpty>No previous dinners</ComboboxEmpty>
-              </ComboboxContent>
-            </Combobox>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Notes</label>
-            <textarea
-              className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-              rows={2}
-              placeholder="Any notes…"
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">
-              Recipe link
-            </label>
-            <select
-              className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              value={editLinkId ?? ''}
-              onChange={(e) => setEditLinkId(e.target.value || null)}
-            >
-              <option value="">None</option>
-              {myLinks.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {constraints.length > 0 && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Constraints
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {constraints.map((c) => {
-                  const active = editConstraintIds.includes(c.id)
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() =>
-                        setEditConstraintIds((prev) =>
-                          active
-                            ? prev.filter((id) => id !== c.id)
-                            : [...prev, c.id],
-                        )
-                      }
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium border transition-all"
-                      style={
-                        active
-                          ? {
-                              backgroundColor: c.color + '22',
-                              color: c.color,
-                              borderColor: c.color,
-                            }
-                          : {}
-                      }
-                    >
-                      {c.emoji && <span>{c.emoji}</span>}
-                      {c.name}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="px-5 py-4 border-t border-border flex gap-2 shrink-0">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => setEditingDay(null)}
-          >
-            Cancel
-          </Button>
-          <Button className="flex-1" onClick={saveDay} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
-          </Button>
-        </div>
-      </>
     )
   }
 
@@ -518,16 +528,16 @@ function PlannerPage() {
                   )}
                 </div>
 
-                {day?.recipeLink && (
+                {day?.recipeUrl && (
                   <a
-                    href={day.recipeLink.url}
+                    href={day.recipeUrl}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <ExternalLinkIcon className="w-3 h-3" />
-                    <span className="truncate">{day.recipeLink.title}</span>
+                    <span className="truncate">{day.recipeUrl}</span>
                   </a>
                 )}
 
@@ -607,12 +617,42 @@ function PlannerPage() {
             <div className="flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
-            <DrawerForm />
+            <DrawerForm
+              editingDay={editingDay}
+              editMeal={editMeal}
+              setEditMeal={setEditMeal}
+              editNotes={editNotes}
+              setEditNotes={setEditNotes}
+              editRecipeUrl={editRecipeUrl}
+              setEditRecipeUrl={setEditRecipeUrl}
+              editConstraintIds={editConstraintIds}
+              setEditConstraintIds={setEditConstraintIds}
+              pastMealNames={pastMealNames}
+              constraints={constraints}
+              saving={saving}
+              onSave={saveDay}
+              onClose={() => setEditingDay(null)}
+            />
           </div>
 
           {/* Desktop: right panel */}
           <div className="hidden md:flex fixed right-0 top-0 bottom-0 w-full max-w-md bg-card border-l border-border flex-col shadow-2xl z-50">
-            <DrawerForm />
+            <DrawerForm
+              editingDay={editingDay}
+              editMeal={editMeal}
+              setEditMeal={setEditMeal}
+              editNotes={editNotes}
+              setEditNotes={setEditNotes}
+              editRecipeUrl={editRecipeUrl}
+              setEditRecipeUrl={setEditRecipeUrl}
+              editConstraintIds={editConstraintIds}
+              setEditConstraintIds={setEditConstraintIds}
+              pastMealNames={pastMealNames}
+              constraints={constraints}
+              saving={saving}
+              onSave={saveDay}
+              onClose={() => setEditingDay(null)}
+            />
           </div>
         </>
       )}
