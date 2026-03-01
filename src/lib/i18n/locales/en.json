@@ -7,6 +7,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
+    "share": "Share",
     "back": "Back",
     "next": "Next",
     "submit": "Submit",
@@ -40,6 +41,7 @@
   "nav": {
     "home": "Home",
     "planner": "Planner",
+    "families": "Families",
     "groups": "Groups",
     "settings": "Settings",
     "links": "Links"
@@ -101,6 +103,15 @@
       "goToPlanner": "Go to your planner →",
       "you": "(you)",
       "notShared": "Not shared yet"
+    },
+    "tabs": {
+      "feed": "Feed",
+      "links": "Links",
+      "members": "Members"
+    },
+    "familyTabs": {
+      "planner": "Planner",
+      "members": "Members"
     }
   },
   "families": {

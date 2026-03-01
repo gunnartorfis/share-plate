@@ -5,10 +5,12 @@ import { createGroup } from '@/lib/server/groups'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/groups/new')({ component: NewGroupPage })
 
 function NewGroupPage() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [name, setName] = useState('')
   const [result, setResult] = useState<{
@@ -32,7 +34,7 @@ function NewGroupPage() {
     <AppLayout>
       <div className="max-w-lg mx-auto px-6 py-8">
         <h1 className="text-3xl font-display font-bold tracking-tight mb-8">
-          Create group
+          {t('groups.create')}
         </h1>
 
         {result ? (
@@ -41,10 +43,10 @@ function NewGroupPage() {
               <CheckIcon className="w-6 h-6 text-primary" />
             </div>
             <h2 className="text-lg font-display font-semibold mb-1">
-              Group created!
+              {t('groups.created')}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Share this invite code with your group:
+              {t('groups.shareCode')}
             </p>
             <div className="bg-background border border-border rounded-lg px-6 py-4 mb-6">
               <p className="text-3xl font-mono font-bold tracking-[0.2em] text-primary">
@@ -59,17 +61,17 @@ function NewGroupPage() {
                 })
               }
             >
-              Go to group
+              {t('groups.goToGroup')}
             </Button>
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="name">Group name</Label>
+                <Label htmlFor="name">{t('groups.name')}</Label>
                 <Input
                   id="name"
-                  placeholder="e.g. Kindergarten families"
+                  placeholder={t('groups.namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -77,7 +79,7 @@ function NewGroupPage() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating…' : 'Create group'}
+                {loading ? t('common.saving') : t('groups.create')}
               </Button>
             </form>
           </div>

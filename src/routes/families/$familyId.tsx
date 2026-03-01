@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/families/$familyId')({
   component: FamilyPage,
@@ -22,6 +23,7 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const MEALS = ['Dinner']
 
 function FamilyPage() {
+  const { t } = useTranslation()
   const { familyId } = Route.useParams()
   const router = useRouter()
   const weekStart = currentWeekStart()
@@ -153,7 +155,7 @@ function FamilyPage() {
   }
 
   async function handleLeave() {
-    if (!confirm('Leave this family?')) return
+    if (!confirm(t('families.leaveConfirm'))) return
     setLeaving(true)
     await leaveFamily({ data: { familyId } })
     router.navigate({ to: '/families' })
@@ -163,7 +165,7 @@ function FamilyPage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64 text-muted-foreground">
-          Loading…
+          {t('common.loading')}
         </div>
       </AppLayout>
     )
@@ -183,7 +185,7 @@ function FamilyPage() {
               {family.name}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Invite code:{' '}
+              {t('families.inviteCode')}{' '}
               <span className="font-mono font-semibold text-foreground">
                 {family.inviteCode}
               </span>
@@ -195,24 +197,24 @@ function FamilyPage() {
             onClick={handleLeave}
             disabled={leaving}
           >
-            Leave family
+            {t('families.leave')}
           </Button>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-border">
-          {(['planner', 'members'] as const).map((t) => (
+          {(['planner', 'members'] as const).map((tabKey) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabKey}
+              onClick={() => setTab(tabKey)}
               className={cn(
                 'px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
-                tab === t
+                tab === tabKey
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
-              {t}
+              {t(`families.familyTabs.${tabKey}`)}
             </button>
           ))}
         </div>
@@ -222,7 +224,7 @@ function FamilyPage() {
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <p className="text-sm text-muted-foreground">
-                Week of{' '}
+                {t('families.planner.weekOf')}{' '}
                 {new Date(weekStart + 'T12:00:00').toLocaleDateString('en-GB', {
                   day: 'numeric',
                   month: 'long',
@@ -231,7 +233,7 @@ function FamilyPage() {
               {family.role === 'admin' && availableFamilies.length > 0 && (
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Type family name..."
+                    placeholder={t('families.planner.typeFamilyName')}
                     value={shareCode}
                     onChange={(e) => setShareCode(e.target.value)}
                     className="h-8 sm:w-40 text-sm"
@@ -241,7 +243,7 @@ function FamilyPage() {
                     onClick={handleShare}
                     disabled={sharing || !shareCode}
                   >
-                    Share
+                    {t('families.planner.share')}
                   </Button>
                 </div>
               )}
@@ -251,7 +253,7 @@ function FamilyPage() {
             {sharedPlans.length > 0 && (
               <div className="mb-6 space-y-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Shared with you
+                  {t('families.planner.sharedWithYou')}
                 </p>
                 {sharedPlans.map(({ family: sf }) => (
                   <div
@@ -265,7 +267,7 @@ function FamilyPage() {
                           onClick={() => handleUnshare(sf.id)}
                           className="text-xs text-muted-foreground hover:text-destructive"
                         >
-                          Remove
+                          {t('families.planner.remove')}
                         </button>
                       )}
                     </div>
@@ -295,7 +297,7 @@ function FamilyPage() {
                       {isEditing ? (
                         <div className="space-y-2">
                           <Input
-                            placeholder="Meal name"
+                            placeholder={t('families.planner.mealName')}
                             value={editForm.mealName}
                             onChange={(e) =>
                               setEditForm({
@@ -306,7 +308,7 @@ function FamilyPage() {
                             className="h-9 text-sm"
                           />
                           <Input
-                            placeholder="Notes"
+                            placeholder={t('families.planner.notes')}
                             value={editForm.notes}
                             onChange={(e) =>
                               setEditForm({
@@ -317,7 +319,7 @@ function FamilyPage() {
                             className="h-9 text-sm"
                           />
                           <Input
-                            placeholder="Recipe URL"
+                            placeholder={t('families.planner.recipeUrl')}
                             value={editForm.recipeUrl}
                             onChange={(e) =>
                               setEditForm({
@@ -334,14 +336,16 @@ function FamilyPage() {
                               disabled={saving}
                               className="flex-1"
                             >
-                              {saving ? 'Saving...' : 'Save'}
+                              {saving
+                                ? t('families.planner.saving')
+                                : t('families.planner.save')}
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => setEditingDay(null)}
                             >
-                              Cancel
+                              {t('families.planner.cancel')}
                             </Button>
                           </div>
                         </div>
@@ -361,7 +365,7 @@ function FamilyPage() {
                             </p>
                           ) : (
                             <p className="text-xs text-muted-foreground italic">
-                              Tap to add
+                              {t('families.planner.tapToAdd')}
                             </p>
                           )}
                           {day?.notes && (
@@ -407,7 +411,7 @@ function FamilyPage() {
                         {isEditing ? (
                           <div className="space-y-2">
                             <Input
-                              placeholder="Meal name"
+                              placeholder={t('families.planner.mealName')}
                               value={editForm.mealName}
                               onChange={(e) =>
                                 setEditForm({
@@ -418,7 +422,7 @@ function FamilyPage() {
                               className="h-8 text-sm"
                             />
                             <Input
-                              placeholder="Notes"
+                              placeholder={t('families.planner.notes')}
                               value={editForm.notes}
                               onChange={(e) =>
                                 setEditForm({
@@ -429,7 +433,7 @@ function FamilyPage() {
                               className="h-8 text-sm"
                             />
                             <Input
-                              placeholder="Recipe URL"
+                              placeholder={t('families.planner.recipeUrl')}
                               value={editForm.recipeUrl}
                               onChange={(e) =>
                                 setEditForm({
@@ -446,14 +450,16 @@ function FamilyPage() {
                                 disabled={saving}
                                 className="flex-1"
                               >
-                                {saving ? 'Saving...' : 'Save'}
+                                {saving
+                                  ? t('families.planner.saving')
+                                  : t('families.planner.save')}
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => setEditingDay(null)}
                               >
-                                Cancel
+                                {t('families.planner.cancel')}
                               </Button>
                             </div>
                           </div>
@@ -480,7 +486,7 @@ function FamilyPage() {
                                     </p>
                                   ) : (
                                     <p className="text-xs text-muted-foreground italic">
-                                      Click to add
+                                      {t('families.planner.clickToAdd')}
                                     </p>
                                   )}
                                   {day?.notes && (
@@ -513,7 +519,9 @@ function FamilyPage() {
 
             {/* Members indicator */}
             <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Members:</span>
+              <span className="text-xs text-muted-foreground">
+                {t('families.membersLabel')}
+              </span>
               {family.members.map((member) => (
                 <div
                   key={member.id}

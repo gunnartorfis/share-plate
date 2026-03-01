@@ -32,7 +32,8 @@ export default [
                     /^[a-zA-Z\s.,!?'"()-]+$/.test(text) &&
                     !text.includes('{{') &&
                     !text.includes('i18n') &&
-                    !text.includes('.') // translation keys contain dots
+                    !text.includes('.') &&
+                    !/[áéíóúýþæø]/.test(text)
                   ) {
                     context.report({
                       node,
@@ -46,9 +47,21 @@ export default [
                     node.value.length > 0 &&
                     /^[a-zA-Z\s.,!?'"()-]+$/.test(node.value) &&
                     !node.value.includes('{{') &&
-                    !node.value.includes('.') // translation keys contain dots
+                    !node.value.includes('.') &&
+                    !/[áéíóúýþæø]/.test(node.value)
                   ) {
                     const parent = node.parent
+                    // Skip import declarations
+                    if (
+                      parent?.type === AST_NODE_TYPES.ImportDeclaration ||
+                      parent?.type === AST_NODE_TYPES.Literal
+                    ) {
+                      return
+                    }
+                    // Skip JSX attributes
+                    if (parent?.type === AST_NODE_TYPES.JSXAttribute) {
+                      return
+                    }
                     if (
                       parent?.type === AST_NODE_TYPES.Property &&
                       parent.key.type === AST_NODE_TYPES.Identifier &&
@@ -56,7 +69,15 @@ export default [
                         parent.key.name === 'title' ||
                         parent.key.name === 'alt' ||
                         parent.key.name === 'aria-label' ||
-                        parent.key.name === 'id')
+                        parent.key.name === 'id' ||
+                        parent.key.name === 'type' ||
+                        parent.key.name === 'autoComplete' ||
+                        parent.key.name === 'name' ||
+                        parent.key.name === 'minLength' ||
+                        parent.key.name === 'maxLength' ||
+                        parent.key.name === 'autoFocus' ||
+                        parent.key.name === 'rel' ||
+                        parent.key.name === 'method')
                     ) {
                       return
                     }

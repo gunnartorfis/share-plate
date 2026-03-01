@@ -7,6 +7,7 @@
     "delete": "Eyða",
     "edit": "Breyta",
     "create": "Búa til",
+    "share": "Deila",
     "back": "Til baka",
     "next": "Næsta",
     "submit": "Senda",
@@ -40,6 +41,7 @@
   "nav": {
     "home": "Heim",
     "planner": "Matseðill",
+    "families": "Fjölskyldur",
     "groups": "Hópar",
     "settings": "Stillingar",
     "links": "Tenglar"
@@ -101,6 +103,15 @@
       "goToPlanner": "Fara í matseðilinn þinn →",
       "you": "(þú)",
       "notShared": "Ekki deilt enn"
+    },
+    "tabs": {
+      "feed": "Fæða",
+      "links": "Tenglar",
+      "members": "Meðlimir"
+    },
+    "familyTabs": {
+      "planner": "Matseðill",
+      "members": "Meðlimir"
     }
   },
   "families": {

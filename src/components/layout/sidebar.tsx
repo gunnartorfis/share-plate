@@ -1,15 +1,17 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { to: '/planner', label: 'Planner', icon: CalendarIcon },
-  { to: '/families', label: 'Families', icon: FamilyIcon },
-  { to: '/groups', label: 'Groups', icon: UsersIcon },
-  { to: '/links', label: 'Links', icon: LinkIcon },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon },
+  { to: '/planner', labelKey: 'nav.planner', icon: CalendarIcon },
+  { to: '/families', labelKey: 'nav.families', icon: FamilyIcon },
+  { to: '/groups', labelKey: 'nav.groups', icon: UsersIcon },
+  { to: '/links', labelKey: 'nav.links', icon: LinkIcon },
+  { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const { location } = useRouterState()
 
   return (
@@ -20,16 +22,16 @@ export function Sidebar() {
           className="text-2xl font-display font-bold tracking-tight"
           style={{ fontVariationSettings: '"opsz" 144' }}
         >
-          Share Plate
+          {t('home.title')}
         </span>
         <p className="text-sidebar-foreground/50 text-xs mt-0.5">
-          Dinner planning
+          {t('home.subtitle')}
         </p>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 space-y-0.5">
-        {NAV.map(({ to, label, icon: Icon }) => {
+        {NAV.map(({ to, labelKey, icon: Icon }) => {
           const active = location.pathname.startsWith(to)
           return (
             <Link
@@ -43,7 +45,7 @@ export function Sidebar() {
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
-              {label}
+              {t(labelKey)}
             </Link>
           )
         })}
@@ -51,19 +53,22 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border">
-        <p className="text-xs text-sidebar-foreground/40 px-3">© Share Plate</p>
+        <p className="text-xs text-sidebar-foreground/40 px-3">
+          © {t('home.title')}
+        </p>
       </div>
     </aside>
   )
 }
 
 export function MobileNav() {
+  const { t } = useTranslation()
   const { location } = useRouterState()
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-sidebar border-t border-sidebar-border safe-area-bottom">
       <div className="flex items-stretch h-16">
-        {NAV.map(({ to, label, icon: Icon }) => {
+        {NAV.map(({ to, labelKey, icon: Icon }) => {
           const active = location.pathname.startsWith(to)
           return (
             <Link
@@ -77,7 +82,7 @@ export function MobileNav() {
               )}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{t(labelKey)}</span>
             </Link>
           )
         })}

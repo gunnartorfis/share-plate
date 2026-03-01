@@ -5,12 +5,14 @@ import { createFamily } from '@/lib/server/families'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/families/new')({
   component: NewFamilyPage,
 })
 
 function NewFamilyPage() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [name, setName] = useState('')
   const [result, setResult] = useState<{
@@ -34,7 +36,7 @@ function NewFamilyPage() {
     <AppLayout>
       <div className="max-w-lg mx-auto px-6 py-8">
         <h1 className="text-3xl font-display font-bold tracking-tight mb-8">
-          Create family
+          {t('families.create')}
         </h1>
 
         {result ? (
@@ -43,10 +45,10 @@ function NewFamilyPage() {
               <CheckIcon className="w-6 h-6 text-primary" />
             </div>
             <h2 className="text-lg font-display font-semibold mb-1">
-              Family created!
+              {t('families.created')}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Share this invite code with your family:
+              {t('families.shareCode')}
             </p>
             <div className="bg-background border border-border rounded-lg px-6 py-4 mb-6">
               <p className="text-3xl font-mono font-bold tracking-[0.2em] text-primary">
@@ -61,17 +63,17 @@ function NewFamilyPage() {
                 })
               }
             >
-              Go to family
+              {t('families.goToFamily')}
             </Button>
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="name">Family name</Label>
+                <Label htmlFor="name">{t('families.name')}</Label>
                 <Input
                   id="name"
-                  placeholder="e.g. The Smiths"
+                  placeholder={t('families.namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -79,7 +81,7 @@ function NewFamilyPage() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating…' : 'Create family'}
+                {loading ? t('common.saving') : t('families.create')}
               </Button>
             </form>
           </div>

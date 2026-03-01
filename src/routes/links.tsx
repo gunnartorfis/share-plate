@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/links')({ component: LinksPage })
 
@@ -19,6 +20,7 @@ type LinkData = {
 }
 
 function LinksPage() {
+  const { t } = useTranslation()
   const [links, setLinks] = useState<Array<LinkData>>([])
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<LinkData | null>(null)
@@ -86,7 +88,7 @@ function LinksPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this link?')) return
+    if (!confirm(t('links.deleteConfirm'))) return
     await deleteLink({ data: { id } })
     await load()
   }
@@ -100,30 +102,28 @@ function LinksPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold tracking-tight">
-              Recipe links
+              {t('links.title')}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Your personal library of recipe sources
+              {t('links.subtitle')}
             </p>
           </div>
-          <Button onClick={openNew}>Add link</Button>
+          <Button onClick={openNew}>{t('links.addLink')}</Button>
         </div>
 
         {links.length === 0 && !showForm ? (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg font-display font-medium mb-1">
-              No links yet
+              {t('links.noLinks')}
             </p>
-            <p className="text-sm mb-4">
-              Add recipe websites or direct recipe links.
-            </p>
-            <Button onClick={openNew}>Add your first link</Button>
+            <p className="text-sm mb-4">{t('links.noLinksDesc')}</p>
+            <Button onClick={openNew}>{t('links.addFirst')}</Button>
           </div>
         ) : (
           <>
             {websites.length > 0 && (
               <LinkSection
-                title="Recipe websites"
+                title={t('links.websites')}
                 links={websites}
                 onEdit={openEdit}
                 onDelete={handleDelete}
@@ -131,7 +131,7 @@ function LinksPage() {
             )}
             {recipes.length > 0 && (
               <LinkSection
-                title="Recipes"
+                title={t('links.recipes')}
                 links={recipes}
                 onEdit={openEdit}
                 onDelete={handleDelete}
@@ -150,7 +150,7 @@ function LinksPage() {
             <div className="w-full max-w-md bg-card border-l border-border h-full flex flex-col shadow-2xl">
               <div className="px-6 py-5 border-b border-border flex items-center justify-between">
                 <h2 className="text-lg font-display font-semibold">
-                  {editing ? 'Edit link' : 'Add link'}
+                  {editing ? t('links.editLink') : t('links.addLinkTitle')}
                 </h2>
                 <button
                   onClick={() => setShowForm(false)}
@@ -167,71 +167,77 @@ function LinksPage() {
               >
                 {/* Type toggle */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Type</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    {t('links.type')}
+                  </label>
                   <div className="flex rounded-md border border-border overflow-hidden">
-                    {(['recipe', 'website'] as const).map((t) => (
+                    {(['recipe', 'website'] as const).map((linkType) => (
                       <button
-                        key={t}
+                        key={linkType}
                         type="button"
-                        onClick={() => setType(t)}
+                        onClick={() => setType(linkType)}
                         className={cn(
                           'flex-1 py-2 text-sm font-medium capitalize transition-colors',
-                          type === t
+                          type === linkType
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-card text-muted-foreground hover:text-foreground',
                         )}
                       >
-                        {t === 'website' ? 'Recipe website' : 'Specific recipe'}
+                        {linkType === 'website'
+                          ? t('links.recipeWebsite')
+                          : t('links.specificRecipe')}
                       </button>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5">
                     {type === 'website'
-                      ? 'A site with many recipes (e.g. seriouseats.com)'
-                      : 'A link to one specific recipe (e.g. carbonara recipe)'}
+                      ? t('links.websiteHint')
+                      : t('links.recipeHint')}
                   </p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="title">{t('links.titleLabel')}</Label>
                   <Input
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    placeholder="e.g. Serious Eats"
+                    placeholder={t('links.titlePlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="url">URL</Label>
+                  <Label htmlFor="url">{t('links.urlLabel')}</Label>
                   <Input
                     id="url"
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     required
-                    placeholder="https://…"
+                    placeholder={t('links.urlPlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="description">Description (optional)</Label>
+                  <Label htmlFor="description">
+                    {t('links.descriptionLabel')}
+                  </Label>
                   <Input
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Brief notes…"
+                    placeholder={t('links.descriptionPlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="tags">Tags (comma separated)</Label>
+                  <Label htmlFor="tags">{t('links.tagsLabel')}</Label>
                   <Input
                     id="tags"
                     value={tagsStr}
                     onChange={(e) => setTagsStr(e.target.value)}
-                    placeholder="e.g. italian, quick, fish"
+                    placeholder={t('links.tagsPlaceholder')}
                   />
                 </div>
               </form>
@@ -242,7 +248,7 @@ function LinksPage() {
                   className="flex-1"
                   onClick={() => setShowForm(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -250,7 +256,7 @@ function LinksPage() {
                   className="flex-1"
                   disabled={saving}
                 >
-                  {saving ? 'Saving…' : 'Save'}
+                  {saving ? t('common.saving') : t('common.save')}
                 </Button>
               </div>
             </div>
@@ -272,6 +278,7 @@ function LinkSection({
   onEdit: (l: LinkData) => void
   onDelete: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="mb-7">
       <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
@@ -295,7 +302,7 @@ function LinkSection({
                 </a>
                 {link.type === 'website' && (
                   <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded font-medium">
-                    site
+                    {t('links.site')}
                   </span>
                 )}
               </div>
