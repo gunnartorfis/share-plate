@@ -2,13 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db'
-import {
-  groupFamilies,
-  groups,
-  families,
-  familyMembers,
-  users,
-} from '../db/schema'
+import { groupFamilies, groups, families, familyMembers } from '../db/schema'
 import { getUser } from '../auth/get-user'
 
 function uid() {

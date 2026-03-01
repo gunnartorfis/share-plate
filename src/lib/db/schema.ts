@@ -94,13 +94,13 @@ export const familyShares = sqliteTable('family_shares', {
     .default(sql`(unixepoch())`),
 })
 
-export const groupMembers = sqliteTable('group_members', {
+export const groupFamilies = sqliteTable('group_families', {
   groupId: text('group_id')
     .notNull()
     .references(() => groups.id, { onDelete: 'cascade' }),
-  userId: text('user_id')
+  familyId: text('family_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => families.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['admin', 'member'] })
     .notNull()
     .default('member'),
@@ -195,11 +195,24 @@ export const planShares = sqliteTable('plan_shares', {
     .default(sql`(unixepoch())`),
 })
 
+export const groupShares = sqliteTable('group_shares', {
+  familyMealPlanId: text('family_meal_plan_id')
+    .notNull()
+    .references(() => familyMealPlans.id, { onDelete: 'cascade' }),
+  groupId: text('group_id')
+    .notNull()
+    .references(() => groups.id, { onDelete: 'cascade' }),
+  sharedAt: integer('shared_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
 // Types
 export type User = typeof users.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type Group = typeof groups.$inferSelect
-export type GroupMember = typeof groupMembers.$inferSelect
+export type GroupFamily = typeof groupFamilies.$inferSelect
+export type GroupShare = typeof groupShares.$inferSelect
 export type Constraint = typeof constraints.$inferSelect
 export type DayTemplate = typeof dayTemplates.$inferSelect
 export type RecipeLink = typeof recipeLinks.$inferSelect

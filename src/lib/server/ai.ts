@@ -7,8 +7,9 @@ import {
   constraints,
   dayTemplates,
   groupLinks,
-  groupMembers,
+  groupFamilies,
   recipeLinks,
+  familyMembers,
 } from '../db/schema'
 import { getUser } from '../auth/get-user'
 import { upsertDayPlan } from './meal-plans'
@@ -57,24 +58,33 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
     }).join('\n')
 
     // Load group recipe links for inspiration
-    const memberships = await db
-      .select()
-      .from(groupMembers)
-      .where(eq(groupMembers.userId, user.id))
+    const userFamilies = await db
+      .select({ familyId: familyMembers.familyId })
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    const userFamilyId = userFamilies[0]?.familyId
 
     let linkLines = ''
-    if (memberships.length > 0) {
-      const groupIds = memberships.map((m) => m.groupId)
-      const gLinks = await db
-        .select({ gl: groupLinks, rl: recipeLinks })
-        .from(groupLinks)
-        .innerJoin(recipeLinks, eq(groupLinks.recipeLinkId, recipeLinks.id))
-        .where(inArray(groupLinks.groupId, groupIds))
+    if (userFamilyId) {
+      const memberships = await db
+        .select()
+        .from(groupFamilies)
+        .where(eq(groupFamilies.familyId, userFamilyId))
 
-      if (gLinks.length > 0) {
-        linkLines =
-          '\n\nAvailable recipe links (for inspiration, optional):\n' +
-          gLinks.map(({ rl }) => `  - ${rl.title}: ${rl.url}`).join('\n')
+      if (memberships.length > 0) {
+        const groupIds = memberships.map((m) => m.groupId)
+        const gLinks = await db
+          .select({ gl: groupLinks, rl: recipeLinks })
+          .from(groupLinks)
+          .innerJoin(recipeLinks, eq(groupLinks.recipeLinkId, recipeLinks.id))
+          .where(inArray(groupLinks.groupId, groupIds))
+
+        if (gLinks.length > 0) {
+          linkLines =
+            '\n\nAvailable recipe links (for inspiration, optional):\n' +
+            gLinks.map(({ rl }) => `  - ${rl.title}: ${rl.url}`).join('\n')
+        }
       }
     }
 

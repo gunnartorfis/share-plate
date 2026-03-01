@@ -2,11 +2,25 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db'
-import { groupLinks, groupMembers, recipeLinks } from '../db/schema'
+import {
+  groupLinks,
+  groupFamilies,
+  recipeLinks,
+  familyMembers,
+} from '../db/schema'
 import { getUser } from '../auth/get-user'
 
 function uid() {
   return crypto.randomUUID()
+}
+
+async function getUserFamilyId(userId: string): Promise<string | null> {
+  const userFamilies = await db
+    .select({ familyId: familyMembers.familyId })
+    .from(familyMembers)
+    .where(eq(familyMembers.userId, userId))
+    .limit(1)
+  return userFamilies[0]?.familyId ?? null
 }
 
 export const getMyLinks = createServerFn({ method: 'GET' }).handler(
@@ -81,20 +95,21 @@ export const addLinkToGroup = createServerFn({ method: 'POST' })
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
-    // Verify user is in group
+    const familyId = await getUserFamilyId(user.id)
+    if (!familyId) throw new Error('Not a member of this group')
+
     const membership = await db
       .select()
-      .from(groupMembers)
+      .from(groupFamilies)
       .where(
         and(
-          eq(groupMembers.groupId, data.groupId),
-          eq(groupMembers.userId, user.id),
+          eq(groupFamilies.groupId, data.groupId),
+          eq(groupFamilies.familyId, familyId),
         ),
       )
       .limit(1)
     if (!membership[0]) throw new Error('Not a member of this group')
 
-    // Verify link belongs to user
     const link = await db
       .select()
       .from(recipeLinks)
@@ -122,13 +137,16 @@ export const getGroupLinks = createServerFn({ method: 'GET' })
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
+    const familyId = await getUserFamilyId(user.id)
+    if (!familyId) throw new Error('Not a member')
+
     const membership = await db
       .select()
-      .from(groupMembers)
+      .from(groupFamilies)
       .where(
         and(
-          eq(groupMembers.groupId, data.groupId),
-          eq(groupMembers.userId, user.id),
+          eq(groupFamilies.groupId, data.groupId),
+          eq(groupFamilies.familyId, familyId),
         ),
       )
       .limit(1)

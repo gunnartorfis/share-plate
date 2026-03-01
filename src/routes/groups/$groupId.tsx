@@ -25,11 +25,11 @@ function GroupPage() {
     name: string
     inviteCode: string
     role: string
-    members: Array<{ id: string; name: string; email: string; role: string }>
+    members: Array<{ id: string; name: string; role: string }>
   } | null>(null)
   const [feed, setFeed] = useState<
     Array<{
-      user: { id: string; name: string }
+      family: { id: string; name: string }
       days: Array<{
         dayOfWeek: number
         mealName: string | null
@@ -165,9 +165,9 @@ function GroupPage() {
             </p>
 
             <div className="space-y-4">
-              {feed.map(({ user, days, isMe }) => (
+              {feed.map(({ family, days, isMe }) => (
                 <div
-                  key={user.id}
+                  key={family.id}
                   className={cn(
                     'bg-card border rounded-lg overflow-hidden',
                     isMe ? 'border-primary/40' : 'border-border',
@@ -177,12 +177,12 @@ function GroupPage() {
                   <div className="px-4 py-3 border-b border-border flex items-center gap-2.5">
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                      style={{ backgroundColor: stringToColor(user.id) }}
+                      style={{ backgroundColor: stringToColor(family.id) }}
                     >
-                      {user.name[0].toUpperCase()}
+                      {family.name[0].toUpperCase()}
                     </div>
                     <span className="font-medium text-sm">
-                      {user.name}
+                      {family.name}
                       {isMe && (
                         <span className="ml-1.5 text-xs text-muted-foreground">
                           {t('groups.feed.you')}
@@ -244,14 +244,14 @@ function GroupPage() {
               <div className="bg-card border border-border rounded-lg p-4 mb-5 flex gap-2 items-end">
                 <div className="flex-1">
                   <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-                    Share one of your links
+                    {t('groups.links.shareOne')}
                   </label>
                   <select
                     className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                     value={addingLink}
                     onChange={(e) => setAddingLink(e.target.value)}
                   >
-                    <option value="">Select a link…</option>
+                    <option value="">{t('groups.links.selectLink')}</option>
                     {linksNotInGroup.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.title}
@@ -260,17 +260,17 @@ function GroupPage() {
                   </select>
                 </div>
                 <Button onClick={handleAddLink} disabled={!addingLink}>
-                  Share
+                  {t('common.share')}
                 </Button>
               </div>
             )}
 
             {groupLinks.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <p className="font-display font-medium mb-1">No links yet</p>
-                <p className="text-sm">
-                  Share your recipe links to this group.
+                <p className="font-display font-medium mb-1">
+                  {t('groups.links.noLinks')}
                 </p>
+                <p className="text-sm">{t('groups.links.noLinksDesc')}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -336,9 +336,6 @@ function GroupPage() {
                 </div>
                 <div>
                   <p className="font-medium text-sm">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {member.email}
-                  </p>
                 </div>
                 <span className="ml-auto text-xs text-muted-foreground capitalize">
                   {member.role}

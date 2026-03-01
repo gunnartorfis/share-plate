@@ -4,10 +4,14 @@ import { z } from 'zod'
 import { db } from '../db'
 import {
   dayPlans,
-  groupMembers,
+  familyDayPlans,
+  familyMembers,
+  familyMealPlans,
+  groupFamilies,
+  groupShares,
+  families,
   mealPlans,
   planShares,
-  users,
 } from '../db/schema'
 import { getUser } from '../auth/get-user'
 
@@ -249,51 +253,62 @@ export const getGroupFeed = createServerFn({ method: 'GET' })
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
+    const userFamilies = await db
+      .select({ familyId: familyMembers.familyId })
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, user.id))
+      .limit(1)
+    const userFamilyId = userFamilies[0]?.familyId
+    if (!userFamilyId) throw new Error('Not a member')
+
     const membership = await db
       .select()
-      .from(groupMembers)
+      .from(groupFamilies)
       .where(
         and(
-          eq(groupMembers.groupId, data.groupId),
-          eq(groupMembers.userId, user.id),
+          eq(groupFamilies.groupId, data.groupId),
+          eq(groupFamilies.familyId, userFamilyId),
         ),
       )
       .limit(1)
     if (!membership[0]) throw new Error('Not a member')
 
-    // Get all members of the group
-    const members = await db
-      .select({ user: users })
-      .from(groupMembers)
-      .innerJoin(users, eq(groupMembers.userId, users.id))
-      .where(eq(groupMembers.groupId, data.groupId))
+    const groupFamilyMembers = await db
+      .select({ family: families })
+      .from(groupFamilies)
+      .innerJoin(families, eq(groupFamilies.familyId, families.id))
+      .where(eq(groupFamilies.groupId, data.groupId))
 
-    // Get shared meal plans for this week
-    const sharedPlans = await db
-      .select({ plan: mealPlans, share: planShares })
-      .from(planShares)
-      .innerJoin(mealPlans, eq(planShares.mealPlanId, mealPlans.id))
+    const sharedFamilyPlans = await db
+      .select({ plan: familyMealPlans, share: groupShares })
+      .from(groupShares)
+      .innerJoin(
+        familyMealPlans,
+        eq(groupShares.familyMealPlanId, familyMealPlans.id),
+      )
       .where(
         and(
-          eq(planShares.groupId, data.groupId),
-          eq(mealPlans.weekStart, data.weekStart),
+          eq(groupShares.groupId, data.groupId),
+          eq(familyMealPlans.weekStart, data.weekStart),
         ),
       )
 
-    const planIds = sharedPlans.map((p) => p.plan.id)
+    const planIds = sharedFamilyPlans.map((p) => p.plan.id)
     const allDays =
       planIds.length > 0
         ? await db
             .select()
-            .from(dayPlans)
-            .where(inArray(dayPlans.mealPlanId, planIds))
+            .from(familyDayPlans)
+            .where(inArray(familyDayPlans.familyMealPlanId, planIds))
         : []
 
-    return members.map(({ user: member }) => {
-      const memberPlan = sharedPlans.find((p) => p.plan.userId === member.id)
-      const memberDays = memberPlan
+    return groupFamilyMembers.map(({ family: fam }) => {
+      const familyPlan = sharedFamilyPlans.find(
+        (p) => p.plan.familyId === fam.id,
+      )
+      const familyDays = familyPlan
         ? allDays
-            .filter((d) => d.mealPlanId === memberPlan.plan.id)
+            .filter((d) => d.familyMealPlanId === familyPlan.plan.id)
             .map((d) => ({
               ...d,
               constraintIds: JSON.parse(d.constraintIds) as Array<string>,
@@ -301,9 +316,9 @@ export const getGroupFeed = createServerFn({ method: 'GET' })
         : []
 
       return {
-        user: { id: member.id, name: member.name, email: member.email },
-        days: memberDays,
-        isMe: member.id === user.id,
+        family: { id: fam.id, name: fam.name },
+        days: familyDays,
+        isMe: fam.id === userFamilyId,
       }
     })
   })
