@@ -23,7 +23,8 @@
     "email": "Email",
     "password": "Password",
     "recipe": "recipe",
-    "joinFailed": "Failed to join"
+    "joinFailed": "Failed to join",
+    "language": "Language"
   },
   "auth": {
     "login": "Login",
@@ -38,14 +39,15 @@
     "currentPassword": "Current password",
     "newPassword": "New password",
     "signOut": "Sign out",
-    "minLength": "At least 8 characters"
+    "minLength": "At least 8 characters",
+    "account": "My Account"
   },
   "nav": {
     "home": "Home",
     "planner": "Planner",
     "families": "Families",
     "groups": "Groups",
-    "links": "Links",
+    "recipes": "Recipes",
     "constraints": "Constraints",
     "settings": "Settings"
   },
@@ -98,10 +100,10 @@
     "enterCode": "Enter invite code…",
     "joining": "Joining…",
     "links": {
-      "shareOne": "Share one of your links",
-      "selectLink": "Select a link…",
-      "noLinks": "No links yet",
-      "noLinksDesc": "Share your recipe links to this group."
+      "shareOne": "Share one of your recipes",
+      "selectLink": "Select a recipe…",
+      "noLinks": "No recipes yet",
+      "noLinksDesc": "Share your recipes with this group."
     },
     "feed": {
       "weekOf": "Week of",
@@ -111,7 +113,7 @@
     },
     "tabs": {
       "feed": "Feed",
-      "links": "Links",
+      "recipes": "Recipes",
       "members": "Members"
     },
     "familyTabs": {
@@ -158,32 +160,25 @@
       "clickToAdd": "Click to add"
     }
   },
-  "links": {
-    "title": "Recipe links",
-    "subtitle": "Your personal library of recipe sources",
-    "addLink": "Add link",
-    "noLinks": "No links yet",
-    "noLinksDesc": "Add recipe websites or direct recipe links.",
-    "addFirst": "Add your first link",
-    "websites": "Recipe websites",
-    "recipes": "Recipes",
-    "editLink": "Edit link",
-    "addLinkTitle": "Add link",
-    "type": "Type",
-    "recipeWebsite": "Recipe website",
-    "specificRecipe": "Specific recipe",
-    "websiteHint": "A site with many recipes (e.g. seriouseats.com)",
-    "recipeHint": "A link to one specific recipe (e.g. carbonara recipe)",
+  "recipes": {
+    "title": "Recipes",
+    "subtitle": "Your personal recipe collection",
+    "addRecipe": "Add recipe",
+    "noRecipes": "No recipes yet",
+    "noRecipesDesc": "Add recipes or recipe links.",
+    "addFirst": "Add your first recipe",
+    "editRecipe": "Edit recipe",
+    "addRecipeTitle": "Add recipe",
     "titleLabel": "Title",
-    "titlePlaceholder": "e.g. Serious Eats",
-    "urlLabel": "URL",
+    "titlePlaceholder": "e.g. Homemade Burgers",
+    "urlLabel": "Recipe URL (optional)",
     "urlPlaceholder": "https://…",
     "descriptionLabel": "Description (optional)",
-    "descriptionPlaceholder": "Brief notes…",
+    "descriptionPlaceholder": "Notes about this recipe…",
     "tagsLabel": "Tags (comma separated)",
-    "tagsPlaceholder": "e.g. italian, quick, fish",
-    "deleteConfirm": "Delete this link?",
-    "site": "site"
+    "tagsPlaceholder": "e.g. quick, grilled, beef",
+    "deleteConfirm": "Delete this recipe?",
+    "fetchingMetadata": "Fetching recipe info..."
   },
   "settings": {
     "title": "Settings",
@@ -193,6 +188,8 @@
     "constraints": "Constraints",
     "profile": "Profile",
     "password": "Password",
+    "defaultConstraints": "Defaults",
+    "defaultConstraintsDesc": "Click to add common constraints or create your own",
     "myConstraints": "My constraints",
     "newConstraint": "New constraint",
     "editConstraint": "Edit",
@@ -228,5 +225,20 @@
   },
   "meals": {
     "dinner": "Dinner"
+  },
+  "constraints": {
+    "defaults": {
+      "fish": "Fish",
+      "simple": "Simple",
+      "quick": "Quick",
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "healthy": "Healthy",
+      "comfort": "Comfort food",
+      "kidFriendly": "Kid-friendly",
+      "new": "Something new",
+      "create": "New"
+    },
+    "newHint": "AI will suggest something you've never cooked before"
   }
 }

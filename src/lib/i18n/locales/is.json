@@ -23,7 +23,8 @@
     "email": "Netfang",
     "password": "Lykilorð",
     "recipe": "uppskrift",
-    "joinFailed": "Mistókst að ganga í"
+    "joinFailed": "Mistókst að ganga í",
+    "language": "Tungumál"
   },
   "auth": {
     "login": "Innskrá",
@@ -38,14 +39,15 @@
     "currentPassword": "Núverandi lykilorð",
     "newPassword": "Nýtt lykilorð",
     "signOut": "Skrá út",
-    "minLength": "Að minnsta kosti 8 stafir"
+    "minLength": "Að minnsta kosti 8 stafir",
+    "account": "Minn aðgangur"
   },
   "nav": {
     "home": "Heim",
     "planner": "Matseðill",
     "families": "Fjölskyldur",
     "groups": "Hópar",
-    "links": "Tenglar",
+    "recipes": "Uppskriftir",
     "constraints": "Takmarkanir",
     "settings": "Stillingar"
   },
@@ -98,10 +100,10 @@
     "enterCode": "Sláðu inn boðskóða…",
     "joining": "Gengur í hóp…",
     "links": {
-      "shareOne": "Deildu einum af tenglunum þínum",
-      "selectLink": "Veldu tengil…",
-      "noLinks": "Engir tenglar",
-      "noLinksDesc": "Deildu recipe tenglunum þínum með þessum hópi."
+      "shareOne": "Deildu einni af uppskriftunum þínum",
+      "selectLink": "Veldu uppskrift…",
+      "noLinks": "Engar uppskriftir",
+      "noLinksDesc": "Deildu uppskriftunum þínum með þessum hópi."
     },
     "feed": {
       "weekOf": "Vika af",
@@ -111,7 +113,7 @@
     },
     "tabs": {
       "feed": "Fæða",
-      "links": "Tenglar",
+      "recipes": "Uppskriftir",
       "members": "Meðlimir"
     },
     "familyTabs": {
@@ -158,32 +160,25 @@
       "clickToAdd": "Smelltu til að bæta við"
     }
   },
-  "links": {
-    "title": "Recipe tenglar",
-    "subtitle": "Thín persónulegu bókasafn með recipe uppskriftum",
-    "addLink": "Bæta við tengli",
-    "noLinks": "Engir tenglar",
-    "noLinksDesc": "Bættu við recipe vefsíðum eða beinum recipe tenglum.",
-    "addFirst": "Bættu við fyrsta tenglinum",
-    "websites": "Recipe vefsíður",
-    "recipes": "Uppskriftir",
-    "editLink": "Breyta tengli",
-    "addLinkTitle": "Bæta við tengli",
-    "type": "Tegund",
-    "recipeWebsite": "Recipe vefsíða",
-    "specificRecipe": "Tiltekkin uppskrift",
-    "websiteHint": "Síða með mörgum uppskriftum (t.d. seriouseats.com)",
-    "recipeHint": "Tengill í eina tiltekna uppskrift (t.d. carbonara uppskrift)",
+  "recipes": {
+    "title": "Uppskriftir",
+    "subtitle": "Þín persónulega uppskriftasafn",
+    "addRecipe": "Bæta við uppskrift",
+    "noRecipes": "Engar uppskriftir",
+    "noRecipesDesc": "Bættu við uppskriftum eða tenglum á uppskriftir.",
+    "addFirst": "Bættu við fyrstu uppskrift",
+    "editRecipe": "Breyta uppskrift",
+    "addRecipeTitle": "Bæta við uppskrift",
     "titleLabel": "Titill",
-    "titlePlaceholder": "t.d. Serious Eats",
-    "urlLabel": "URL",
+    "titlePlaceholder": "t.d. Heimagerðar hamborgarar",
+    "urlLabel": "Vefslóð uppskriftar (valfrjálst)",
     "urlPlaceholder": "https://…",
     "descriptionLabel": "Lýsing (valfrjálst)",
-    "descriptionPlaceholder": "Stuttar athugasemdir…",
+    "descriptionPlaceholder": "Athugasemdir um uppskriftina…",
     "tagsLabel": "Tags (aðgreint með kommu)",
-    "tagsPlaceholder": "t.d. ítalskt, fljótgt, fiskur",
-    "deleteConfirm": "Eyða þessum tengli?",
-    "site": "síða"
+    "tagsPlaceholder": "t.d. fljótgt, grillað, nautakjöt",
+    "deleteConfirm": "Eyða þessari uppskrift?",
+    "fetchingMetadata": "Sæki upplýsingar um uppskrift..."
   },
   "settings": {
     "title": "Stillingar",
@@ -193,6 +188,8 @@
     "constraints": "Takmarkanir",
     "profile": "Forstillingar",
     "password": "Lykilorð",
+    "defaultConstraints": "Sjálfgefnar",
+    "defaultConstraintsDesc": "Smelltu til að bæta við almennum takmörkunum eða búa til þínar eigin",
     "myConstraints": "Mínar takmarkanir",
     "newConstraint": "Ný takmörkun",
     "editConstraint": "Breyta",
@@ -228,5 +225,20 @@
   },
   "meals": {
     "dinner": "Kvöldverður"
+  },
+  "constraints": {
+    "defaults": {
+      "fish": "Fiskur",
+      "simple": "Einfalt",
+      "quick": "Fljótgt",
+      "vegetarian": "Grænmetis",
+      "vegan": "Vegan",
+      "healthy": "Hollur",
+      "comfort": "Huggunarfood",
+      "kidFriendly": "Barna",
+      "new": "Eitthvað nýtt",
+      "create": "Ný"
+    },
+    "newHint": "AI mun mæla með eðu sem þú hefur aldrei eldað áður"
   }
 }

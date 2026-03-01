@@ -1,21 +1,41 @@
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { User } from '@/lib/db/schema'
 import { cn } from '@/lib/utils'
+import { logout } from '@/lib/server/auth'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  ArrowDown01Icon,
+  LogoutIcon,
+  SettingsIcon as SettingsIconOutline,
+  LanguageCircleIcon,
+} from '@hugeicons/core-free-icons'
 
 const NAV = [
   { to: '/planner', labelKey: 'nav.planner', icon: CalendarIcon },
   { to: '/families', labelKey: 'nav.families', icon: FamilyIcon },
   { to: '/groups', labelKey: 'nav.groups', icon: UsersIcon },
-  { to: '/links', labelKey: 'nav.links', icon: LinkIcon },
+  { to: '/recipes', labelKey: 'nav.recipes', icon: RecipeIcon },
   { to: '/constraints', labelKey: 'nav.constraints', icon: ConstraintsIcon },
-  { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
 
 export function Sidebar({ user }: { user: User }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { location } = useRouterState()
+  const router = useRouter()
 
   const initials = user.name
     .split(' ')
@@ -23,6 +43,15 @@ export function Sidebar({ user }: { user: User }) {
     .join('')
     .toUpperCase()
     .slice(0, 2)
+
+  const handleLogout = async () => {
+    await logout()
+    router.navigate({ to: '/' })
+  }
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng)
+  }
 
   return (
     <aside className="hidden md:flex w-[220px] min-h-screen bg-sidebar text-sidebar-foreground flex-col shrink-0">
@@ -37,22 +66,6 @@ export function Sidebar({ user }: { user: User }) {
         <p className="text-sidebar-foreground/50 text-xs mt-0.5">
           {t('home.subtitle')}
         </p>
-      </div>
-
-      {/* User */}
-      <div className="px-3 py-2 mb-2">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-sidebar-accent/30">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user.name}</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">
-              {user.email}
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Nav */}
@@ -77,11 +90,88 @@ export function Sidebar({ user }: { user: User }) {
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Footer - User */}
       <div className="p-3 border-t border-sidebar-border">
-        <p className="text-xs text-sidebar-foreground/40 px-3">
-          © {t('home.title')}
-        </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button className="flex items-center gap-3 px-3 py-2 rounded-md w-full text-left hover:bg-sidebar-accent/50 transition-colors">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={user.avatarUrl ?? undefined}
+                    alt={user.name}
+                  />
+                  <AvatarFallback className="text-xs">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                  <p className="text-xs text-sidebar-foreground/50 truncate">
+                    {user.email}
+                  </p>
+                </div>
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  className="w-4 h-4 text-sidebar-foreground/50"
+                />
+              </button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{t('auth.account')}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link
+                  to="/settings"
+                  className="flex items-center cursor-pointer"
+                >
+                  <HugeiconsIcon
+                    icon={SettingsIconOutline}
+                    className="mr-2 w-4 h-4"
+                  />
+                  {t('nav.settings')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <HugeiconsIcon
+                    icon={LanguageCircleIcon}
+                    className="mr-2 w-4 h-4"
+                  />
+                  {t('common.language')}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onClick={() => changeLanguage('en')}
+                    className={cn(
+                      i18n.language === 'en' && 'bg-sidebar-accent',
+                    )}
+                  >
+                    English
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => changeLanguage('is')}
+                    className={cn(
+                      i18n.language === 'is' && 'bg-sidebar-accent',
+                    )}
+                  >
+                    Íslenska
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-500 cursor-pointer"
+              >
+                <HugeiconsIcon icon={LogoutIcon} className="mr-2 w-4 h-4" />
+                {t('auth.logout')}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   )
@@ -172,7 +262,7 @@ function FamilyIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-function LinkIcon({ className }: { className?: string }) {
+function RecipeIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -182,13 +272,12 @@ function LinkIcon({ className }: { className?: string }) {
       strokeWidth={1.75}
     >
       <path
-        d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+        d="M12 2L2 7l10 5 10-5-10-5z"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <path
-        d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-        strokeLinecap="round"
-      />
+      <path d="M2 17l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -206,20 +295,6 @@ function ConstraintsIcon({ className }: { className?: string }) {
         d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
         strokeLinecap="round"
       />
-    </svg>
-  )
-}
-function SettingsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.75}
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   )
 }

@@ -117,6 +117,9 @@ export const constraints = sqliteTable('constraints', {
   name: text('name').notNull(),
   color: text('color').notNull().default('#6b7280'),
   emoji: text('emoji'),
+  type: text('type', { enum: ['regular', 'new'] })
+    .notNull()
+    .default('regular'),
 })
 
 export const dayTemplates = sqliteTable('day_templates', {
@@ -134,11 +137,9 @@ export const recipeLinks = sqliteTable('recipe_links', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
-  url: text('url').notNull(),
+  url: text('url'),
   description: text('description'),
-  type: text('type', { enum: ['website', 'recipe'] })
-    .notNull()
-    .default('recipe'),
+  metadata: text('metadata'), // JSON string with structured recipe metadata
   tags: text('tags').notNull().default('[]'), // JSON array
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()

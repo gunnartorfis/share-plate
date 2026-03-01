@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { getGroup, leaveGroup } from '@/lib/server/groups'
 import { currentWeekStart, getGroupFeed } from '@/lib/server/meal-plans'
-import { addLinkToGroup, getGroupLinks, getMyLinks } from '@/lib/server/links'
+import {
+  addRecipeToGroup,
+  getGroupRecipes,
+  getMyRecipes,
+} from '@/lib/server/recipes'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
@@ -47,34 +51,33 @@ function GroupPage() {
       isMe: boolean
     }>
   >([])
-  const [groupLinks, setGroupLinks] = useState<
+  const [groupRecipes, setGroupRecipes] = useState<
     Array<{
       id: string
       title: string
-      url: string
-      type: string
+      url: string | null
       tags: Array<string>
     }>
   >([])
-  const [myLinks, setMyLinks] = useState<Array<{ id: string; title: string }>>(
-    [],
-  )
-  const [tab, setTab] = useState<'feed' | 'links' | 'members'>('feed')
-  const [addingLink, setAddingLink] = useState('')
+  const [myRecipes, setMyRecipes] = useState<
+    Array<{ id: string; title: string }>
+  >([])
+  const [tab, setTab] = useState<'feed' | 'recipes' | 'members'>('feed')
+  const [addingRecipe, setAddingRecipe] = useState('')
   const [leaving, setLeaving] = useState(false)
 
   async function load() {
     try {
-      const [g, f, gl, ml] = await Promise.all([
+      const [g, f, gr, mr] = await Promise.all([
         getGroup({ data: { groupId } }),
         getGroupFeed({ data: { groupId, weekStart } }),
-        getGroupLinks({ data: { groupId } }),
-        getMyLinks(),
+        getGroupRecipes({ data: { groupId } }),
+        getMyRecipes(),
       ])
       setGroup(g as typeof group)
       setFeed(f as typeof feed)
-      setGroupLinks(gl as typeof groupLinks)
-      setMyLinks(ml)
+      setGroupRecipes(gr as typeof groupRecipes)
+      setMyRecipes(mr)
     } catch {
       router.navigate({ to: '/groups' })
     }
@@ -84,12 +87,12 @@ function GroupPage() {
     load()
   }, [groupId])
 
-  async function handleAddLink() {
-    if (!addingLink) return
-    await addLinkToGroup({ data: { groupId, linkId: addingLink } })
-    setAddingLink('')
-    const gl = await getGroupLinks({ data: { groupId } })
-    setGroupLinks(gl as typeof groupLinks)
+  async function handleAddRecipe() {
+    if (!addingRecipe) return
+    await addRecipeToGroup({ data: { groupId, recipeId: addingRecipe } })
+    setAddingRecipe('')
+    const gr = await getGroupRecipes({ data: { groupId } })
+    setGroupRecipes(gr as typeof groupRecipes)
   }
 
   async function handleLeave() {
@@ -109,8 +112,8 @@ function GroupPage() {
     )
   }
 
-  const linksNotInGroup = myLinks.filter(
-    (l) => !groupLinks.find((gl) => gl.id === l.id),
+  const recipesNotInGroup = myRecipes.filter(
+    (r) => !groupRecipes.find((gr) => gr.id === r.id),
   )
 
   return (
@@ -141,7 +144,7 @@ function GroupPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-border">
-          {(['feed', 'links', 'members'] as const).map((tabKey) => (
+          {(['feed', 'recipes', 'members'] as const).map((tabKey) => (
             <button
               key={tabKey}
               onClick={() => setTab(tabKey)}
@@ -244,11 +247,11 @@ function GroupPage() {
           </div>
         )}
 
-        {/* Links tab */}
-        {tab === 'links' && (
+        {/* Recipes tab */}
+        {tab === 'recipes' && (
           <div>
-            {/* Add link to group */}
-            {linksNotInGroup.length > 0 && (
+            {/* Add recipe to group */}
+            {recipesNotInGroup.length > 0 && (
               <div className="bg-card border border-border rounded-lg p-4 mb-5 flex gap-2 items-end">
                 <div className="flex-1">
                   <label className="text-xs font-medium text-muted-foreground block mb-1.5">
@@ -256,24 +259,24 @@ function GroupPage() {
                   </label>
                   <select
                     className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={addingLink}
-                    onChange={(e) => setAddingLink(e.target.value)}
+                    value={addingRecipe}
+                    onChange={(e) => setAddingRecipe(e.target.value)}
                   >
                     <option value="">{t('groups.links.selectLink')}</option>
-                    {linksNotInGroup.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.title}
+                    {recipesNotInGroup.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.title}
                       </option>
                     ))}
                   </select>
                 </div>
-                <Button onClick={handleAddLink} disabled={!addingLink}>
+                <Button onClick={handleAddRecipe} disabled={!addingRecipe}>
                   {t('common.share')}
                 </Button>
               </div>
             )}
 
-            {groupLinks.length === 0 ? (
+            {groupRecipes.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p className="font-display font-medium mb-1">
                   {t('groups.links.noLinks')}
@@ -282,34 +285,26 @@ function GroupPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {groupLinks.map((link) => (
+                {groupRecipes.map((recipe) => (
                   <a
-                    key={link.id}
-                    href={link.url}
+                    key={recipe.id}
+                    href={recipe.url ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-start gap-3 bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors group"
                   >
-                    <div
-                      className={cn(
-                        'mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase shrink-0',
-                        link.type === 'website'
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-accent/15 text-accent',
-                      )}
-                    >
-                      {link.type}
-                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm group-hover:text-primary transition-colors">
-                        {link.title}
+                        {recipe.title}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {link.url}
-                      </p>
-                      {link.tags.length > 0 && (
+                      {recipe.url && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {recipe.url}
+                        </p>
+                      )}
+                      {recipe.tags.length > 0 && (
                         <div className="flex gap-1 mt-1.5 flex-wrap">
-                          {link.tags.map((tag) => (
+                          {recipe.tags.map((tag) => (
                             <span
                               key={tag}
                               className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded text-[10px]"
@@ -320,7 +315,9 @@ function GroupPage() {
                         </div>
                       )}
                     </div>
-                    <ExternalLinkIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5 group-hover:text-primary" />
+                    {recipe.url && (
+                      <ExternalLinkIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5 group-hover:text-primary" />
+                    )}
                   </a>
                 ))}
               </div>
