@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '../db'
+import { getDbWithSchema } from '../db'
 import {
   constraints,
   dayTemplates,
@@ -10,6 +10,8 @@ import {
   groupFamilies,
   recipeLinks,
   familyMembers,
+  mealPlans,
+  dayPlans,
 } from '../db/schema'
 import { getUser } from '../auth/get-user'
 import { upsertDayPlan } from './meal-plans'
@@ -35,6 +37,8 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
     const apiKey = process.env['GEMINI_API_KEY']
     if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
 
+    const db = await getDbWithSchema()
+
     // Load user constraints and day templates
     const userConstraints = await db
       .select()
@@ -47,14 +51,52 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
       .where(eq(dayTemplates.userId, user.id))
 
     // Build constraint map
-    const constraintMap = new Map(userConstraints.map((c) => [c.id, c.name]))
+    const constraintMap = new Map(userConstraints.map((c) => [c.id, c]))
+
+    // Find constraint IDs that are type "new"
+    const newConstraintIds = new Set(
+      userConstraints.filter((c) => c.type === 'new').map((c) => c.id),
+    )
+
+    // Load user's meal history for the "new" constraint
+    let historyLines = ''
+    if (newConstraintIds.size > 0) {
+      const pastPlans = await db
+        .select({ mp: mealPlans, dp: dayPlans })
+        .from(mealPlans)
+        .innerJoin(dayPlans, eq(dayPlans.mealPlanId, mealPlans.id))
+        .where(eq(mealPlans.userId, user.id))
+        .orderBy(mealPlans.createdAt)
+        .limit(50)
+
+      const mealNames = [
+        ...new Set(pastPlans.map((p) => p.dp.mealName).filter(Boolean)),
+      ]
+      if (mealNames.length > 0) {
+        historyLines =
+          '\n\nMEAL HISTORY - The user has already had these dinners (avoid repeating for "something new" constraints):\n' +
+          mealNames.map((m) => `  - ${m}`).join('\n')
+      }
+    }
 
     const dayConstraintLines = DAY_NAMES.map((name, i) => {
       const tpl = templates.find((t) => t.dayOfWeek === i)
       if (!tpl) return `  ${name}: (no constraints)`
       const ids = JSON.parse(tpl.constraintIds) as Array<string>
-      const names = ids.map((id) => constraintMap.get(id) ?? id).join(', ')
-      return `  ${name}: ${names || '(no constraints)'}`
+      const constraintDetails = ids
+        .map((id) => {
+          const c = constraintMap.get(id)
+          if (!c) return id
+          const hasNewConstraint = newConstraintIds.has(id)
+          return (
+            c.name +
+            (hasNewConstraint
+              ? ' (NEW - make it something different from their history!)'
+              : '')
+          )
+        })
+        .join(', ')
+      return `  ${name}: ${constraintDetails || '(no constraints)'}`
     }).join('\n')
 
     // Load group recipe links for inspiration
@@ -98,7 +140,7 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
 Week: ${fmt(weekDate)} – ${fmt(endDate)}
 
 Day constraints (these MUST be respected — they reflect real life constraints like busy evenings or dietary preferences):
-${dayConstraintLines}${linkLines}
+${dayConstraintLines}${historyLines}${linkLines}
 
 Generate a 7-day DINNER plan (dinner only — not breakfast or lunch). For each day:
 - Suggest a meal name that fits the constraints
@@ -118,7 +160,7 @@ Respond ONLY with valid JSON in this exact format, no other text:
 day 0 = Monday, day 6 = Sunday.`
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
     const result = await model.generateContent(prompt)
     const text = result.response.text()
 
