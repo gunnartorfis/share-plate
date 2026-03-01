@@ -1,50 +1,90 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useState, useEffect } from "react"
-import { AppLayout } from "@/components/layout/app-layout"
-import { getMyConstraints, saveConstraint, deleteConstraint, getDayTemplates, saveDayTemplate } from "@/lib/server/constraints"
-import { updateProfile, changePassword, logout } from "@/lib/server/auth"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useRouter } from "@tanstack/react-router"
-import { cn } from "@/lib/utils"
+import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { AppLayout } from '@/components/layout/app-layout'
+import {
+  deleteConstraint,
+  getDayTemplates,
+  getMyConstraints,
+  saveConstraint,
+  saveDayTemplate,
+} from '@/lib/server/constraints'
+import { changePassword, logout, updateProfile } from '@/lib/server/auth'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute("/settings")({ component: SettingsPage })
+export const Route = createFileRoute('/settings')({ component: SettingsPage })
 
-const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-const PRESET_COLORS = [
-  "#e74c3c", "#e67e22", "#f1c40f", "#2ecc71",
-  "#1abc9c", "#3498db", "#9b59b6", "#e91e63",
-  "#607d8b", "#795548",
+const DAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ]
 
-type Constraint = { id: string; name: string; color: string; emoji: string | null }
+const PRESET_COLORS = [
+  '#e74c3c',
+  '#e67e22',
+  '#f1c40f',
+  '#2ecc71',
+  '#1abc9c',
+  '#3498db',
+  '#9b59b6',
+  '#e91e63',
+  '#607d8b',
+  '#795548',
+]
+
+type Constraint = {
+  id: string
+  name: string
+  color: string
+  emoji: string | null
+}
 
 function SettingsPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<"constraints" | "profile" | "password">("constraints")
-  const [constraints, setConstraints] = useState<Constraint[]>([])
-  const [templates, setTemplates] = useState<{ dayOfWeek: number; constraintIds: string[] }[]>([])
+  const { i18n } = useTranslation()
+  const [tab, setTab] = useState<
+    'constraints' | 'profile' | 'password' | 'language'
+  >('language')
+  const [constraints, setConstraints] = useState<Array<Constraint>>([])
+  const [templates, setTemplates] = useState<
+    Array<{ dayOfWeek: number; constraintIds: Array<string> }>
+  >([])
 
   // Constraint form
-  const [editingConstraint, setEditingConstraint] = useState<Constraint | null>(null)
-  const [cName, setCName] = useState("")
-  const [cColor, setCColor] = useState(PRESET_COLORS[0]!)
-  const [cEmoji, setCEmoji] = useState("")
+  const [editingConstraint, setEditingConstraint] = useState<Constraint | null>(
+    null,
+  )
+  const [cName, setCName] = useState('')
+  const [cColor, setCColor] = useState(PRESET_COLORS[0])
+  const [cEmoji, setCEmoji] = useState('')
   const [cSaving, setCsaving] = useState(false)
 
   // Profile
-  const [pName, setPName] = useState("")
-  const [pEmail, setPEmail] = useState("")
+  const [pName, setPName] = useState('')
+  const [pEmail, setPEmail] = useState('')
   const [pSaving, setPsaving] = useState(false)
-  const [pError, setPError] = useState("")
+  const [pError, setPError] = useState('')
 
   // Password
-  const [pwCurrent, setPwCurrent] = useState("")
-  const [pwNew, setPwNew] = useState("")
+  const [pwCurrent, setPwCurrent] = useState('')
+  const [pwNew, setPwNew] = useState('')
   const [pwSaving, setPwSaving] = useState(false)
-  const [pwError, setPwError] = useState("")
+  const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState(false)
 
   async function loadConstraints() {
@@ -53,25 +93,27 @@ function SettingsPage() {
     setTemplates(
       ts.map((t) => ({
         dayOfWeek: t.dayOfWeek,
-        constraintIds: JSON.parse(t.constraintIds) as string[],
+        constraintIds: JSON.parse(t.constraintIds) as Array<string>,
       })),
     )
   }
 
-  useEffect(() => { loadConstraints() }, [])
+  useEffect(() => {
+    loadConstraints()
+  }, [])
 
   function openNewConstraint() {
     setEditingConstraint(null)
-    setCName("")
-    setCColor(PRESET_COLORS[0]!)
-    setCEmoji("")
+    setCName('')
+    setCColor(PRESET_COLORS[0])
+    setCEmoji('')
   }
 
   function openEditConstraint(c: Constraint) {
     setEditingConstraint(c)
     setCName(c.name)
     setCColor(c.color)
-    setCEmoji(c.emoji ?? "")
+    setCEmoji(c.emoji ?? '')
   }
 
   async function handleSaveConstraint(e: React.FormEvent) {
@@ -87,8 +129,8 @@ function SettingsPage() {
         },
       })
       setEditingConstraint(null)
-      setCName("")
-      setCEmoji("")
+      setCName('')
+      setCEmoji('')
       await loadConstraints()
     } finally {
       setCsaving(false)
@@ -96,7 +138,7 @@ function SettingsPage() {
   }
 
   async function handleDeleteConstraint(id: string) {
-    if (!confirm("Delete this constraint?")) return
+    if (!confirm('Delete this constraint?')) return
     await deleteConstraint({ data: { id } })
     await loadConstraints()
   }
@@ -113,13 +155,13 @@ function SettingsPage() {
 
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault()
-    setPError("")
+    setPError('')
     setPsaving(true)
     try {
       await updateProfile({ data: { name: pName, email: pEmail } })
       await router.invalidate()
     } catch (err) {
-      setPError(err instanceof Error ? err.message : "Failed to update profile")
+      setPError(err instanceof Error ? err.message : 'Failed to update profile')
     } finally {
       setPsaving(false)
     }
@@ -127,16 +169,20 @@ function SettingsPage() {
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
-    setPwError("")
+    setPwError('')
     setPwSuccess(false)
     setPwSaving(true)
     try {
-      await changePassword({ data: { currentPassword: pwCurrent, newPassword: pwNew } })
-      setPwCurrent("")
-      setPwNew("")
+      await changePassword({
+        data: { currentPassword: pwCurrent, newPassword: pwNew },
+      })
+      setPwCurrent('')
+      setPwNew('')
       setPwSuccess(true)
     } catch (err) {
-      setPwError(err instanceof Error ? err.message : "Failed to change password")
+      setPwError(
+        err instanceof Error ? err.message : 'Failed to change password',
+      )
     } finally {
       setPwSaving(false)
     }
@@ -145,34 +191,38 @@ function SettingsPage() {
   async function handleLogout() {
     await logout()
     await router.invalidate()
-    router.navigate({ to: "/login" })
+    router.navigate({ to: '/login' })
   }
 
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-display font-bold tracking-tight mb-8">Settings</h1>
+        <h1 className="text-3xl font-display font-bold tracking-tight mb-8">
+          Settings
+        </h1>
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-border">
-          {(["constraints", "profile", "password"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px",
-                tab === t
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t}
-            </button>
-          ))}
+          {(['constraints', 'profile', 'password', 'language'] as const).map(
+            (t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  'px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
+                  tab === t
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {t}
+              </button>
+            ),
+          )}
         </div>
 
         {/* Constraints tab */}
-        {tab === "constraints" && (
+        {tab === 'constraints' && (
           <div className="space-y-8">
             {/* Constraint builder */}
             <div>
@@ -188,9 +238,9 @@ function SettingsPage() {
                       key={c.id}
                       className="group flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium cursor-pointer"
                       style={{
-                        backgroundColor: c.color + "18",
+                        backgroundColor: c.color + '18',
                         color: c.color,
-                        borderColor: c.color + "55",
+                        borderColor: c.color + '55',
                       }}
                       onClick={() => openEditConstraint(c)}
                     >
@@ -213,7 +263,9 @@ function SettingsPage() {
               {/* New/edit constraint form */}
               <div className="bg-card border border-border rounded-lg p-5">
                 <h3 className="text-sm font-semibold mb-4">
-                  {editingConstraint ? `Edit "${editingConstraint.name}"` : "New constraint"}
+                  {editingConstraint
+                    ? `Edit "${editingConstraint.name}"`
+                    : 'New constraint'}
                 </h3>
                 <form onSubmit={handleSaveConstraint} className="space-y-4">
                   <div className="flex gap-3">
@@ -241,7 +293,9 @@ function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Color</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      Color
+                    </label>
                     <div className="flex gap-2 flex-wrap">
                       {PRESET_COLORS.map((color) => (
                         <button
@@ -249,8 +303,10 @@ function SettingsPage() {
                           type="button"
                           onClick={() => setCColor(color)}
                           className={cn(
-                            "w-7 h-7 rounded-full border-2 transition-transform",
-                            cColor === color ? "border-foreground scale-110" : "border-transparent",
+                            'w-7 h-7 rounded-full border-2 transition-transform',
+                            cColor === color
+                              ? 'border-foreground scale-110'
+                              : 'border-transparent',
                           )}
                           style={{ backgroundColor: color }}
                         />
@@ -261,13 +317,15 @@ function SettingsPage() {
                   {/* Preview */}
                   {cName && (
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Preview</label>
+                      <label className="text-sm font-medium mb-2 block">
+                        Preview
+                      </label>
                       <span
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium border"
                         style={{
-                          backgroundColor: cColor + "22",
+                          backgroundColor: cColor + '22',
                           color: cColor,
-                          borderColor: cColor + "55",
+                          borderColor: cColor + '55',
                         }}
                       >
                         {cEmoji && <span>{cEmoji}</span>}
@@ -278,12 +336,20 @@ function SettingsPage() {
 
                   <div className="flex gap-2">
                     {editingConstraint && (
-                      <Button type="button" variant="outline" onClick={openNewConstraint}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={openNewConstraint}
+                      >
                         New
                       </Button>
                     )}
                     <Button type="submit" disabled={cSaving}>
-                      {cSaving ? "Saving…" : editingConstraint ? "Update" : "Add constraint"}
+                      {cSaving
+                        ? 'Saving…'
+                        : editingConstraint
+                          ? 'Update'
+                          : 'Add constraint'}
                     </Button>
                   </div>
                 </form>
@@ -297,7 +363,8 @@ function SettingsPage() {
                   Day defaults
                 </h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Set default constraints per weekday. These auto-apply when planning.
+                  Set default constraints per weekday. These auto-apply when
+                  planning.
                 </p>
                 <div className="space-y-3">
                   {DAY_NAMES.map((dayName, i) => {
@@ -308,7 +375,9 @@ function SettingsPage() {
                         key={i}
                         className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3"
                       >
-                        <span className="text-sm font-medium w-24 shrink-0">{dayName}</span>
+                        <span className="text-sm font-medium w-24 shrink-0">
+                          {dayName}
+                        </span>
                         <div className="flex flex-wrap gap-1.5">
                           {constraints.map((c) => {
                             const active = activeIds.includes(c.id)
@@ -320,9 +389,9 @@ function SettingsPage() {
                                 style={
                                   active
                                     ? {
-                                        backgroundColor: c.color + "22",
+                                        backgroundColor: c.color + '22',
                                         color: c.color,
-                                        borderColor: c.color + "55",
+                                        borderColor: c.color + '55',
                                       }
                                     : {}
                                 }
@@ -343,7 +412,7 @@ function SettingsPage() {
         )}
 
         {/* Profile tab */}
-        {tab === "profile" && (
+        {tab === 'profile' && (
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="space-y-1.5">
@@ -371,12 +440,16 @@ function SettingsPage() {
                 </p>
               )}
               <Button type="submit" disabled={pSaving}>
-                {pSaving ? "Saving…" : "Update profile"}
+                {pSaving ? 'Saving…' : 'Update profile'}
               </Button>
             </form>
 
             <div className="pt-4 border-t border-border">
-              <Button variant="outline" onClick={handleLogout} className="text-destructive hover:text-destructive">
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="text-destructive hover:text-destructive"
+              >
                 Sign out
               </Button>
             </div>
@@ -384,7 +457,7 @@ function SettingsPage() {
         )}
 
         {/* Password tab */}
-        {tab === "password" && (
+        {tab === 'password' && (
           <div className="bg-card border border-border rounded-lg p-6">
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="space-y-1.5">
@@ -419,9 +492,33 @@ function SettingsPage() {
                 </p>
               )}
               <Button type="submit" disabled={pwSaving}>
-                {pwSaving ? "Changing…" : "Change password"}
+                {pwSaving ? 'Changing…' : 'Change password'}
               </Button>
             </form>
+          </div>
+        )}
+
+        {/* Language tab */}
+        {tab === 'language' && (
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h2 className="text-base font-display font-semibold mb-4">
+              Tungumál
+            </h2>
+            <div className="space-y-3">
+              <Label htmlFor="language">Veldu tungumál</Label>
+              <Select
+                value={i18n.language ?? 'is'}
+                onValueChange={(value) => value && i18n.changeLanguage(value)}
+              >
+                <SelectTrigger id="language" className="w-48">
+                  <SelectValue placeholder="Veldu tungumál" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="is">Íslenska</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
       </div>
