@@ -1,33 +1,167 @@
-import { createFileRoute, useRouter, Link } from "@tanstack/react-router"
-import { useState } from "react"
-import { register } from "@/lib/server/auth"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { createFileRoute, useRouter, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { register } from '@/lib/server/auth'
+import { createHome, joinHome } from '@/lib/server/homes'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-export const Route = createFileRoute("/register")({ component: RegisterPage })
+export const Route = createFileRoute('/register')({ component: RegisterPage })
+
+type Step = 'register' | 'setup-home'
 
 function RegisterPage() {
   const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [step, setStep] = useState<Step>('register')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [homeName, setHomeName] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
-    setError("")
+    setError('')
     setLoading(true)
     try {
       await register({ data: { name, email, password } })
       await router.invalidate()
-      router.navigate({ to: "/planner" })
+      setStep('setup-home')
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed")
+      setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleCreateHome(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await createHome({ data: { name: homeName } })
+      await router.invalidate()
+      router.navigate({ to: '/planner' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create home')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleJoinHome(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await joinHome({ data: { inviteCode } })
+      await router.invalidate()
+      router.navigate({ to: '/planner' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to join home')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (step === 'setup-home') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-display font-bold text-foreground tracking-tight mb-1">
+              Share Plate
+            </h1>
+            <p className="text-muted-foreground text-sm">Set up your home</p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Create Home */}
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+              <h2 className="text-lg font-display font-semibold mb-2">
+                Create your home
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Start a new home and invite others to join.
+              </p>
+              <form onSubmit={handleCreateHome} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="homeName">Home name</Label>
+                  <Input
+                    id="homeName"
+                    type="text"
+                    placeholder="e.g. The Smiths"
+                    value={homeName}
+                    onChange={(e) => setHomeName(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || !homeName.trim()}
+                >
+                  {loading ? 'Creating…' : 'Create home'}
+                </Button>
+              </form>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  or
+                </span>
+              </div>
+            </div>
+
+            {/* Join Home */}
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+              <h2 className="text-lg font-display font-semibold mb-2">
+                Join a home
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Enter an invite code to join an existing home.
+              </p>
+              <form onSubmit={handleJoinHome} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="inviteCode">Invite code</Label>
+                  <Input
+                    id="inviteCode"
+                    type="text"
+                    placeholder="ABC123"
+                    value={inviteCode}
+                    onChange={(e) =>
+                      setInviteCode(e.target.value.toUpperCase())
+                    }
+                    className="font-mono uppercase"
+                    maxLength={6}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || inviteCode.length < 6}
+                >
+                  {loading ? 'Joining…' : 'Join home'}
+                </Button>
+              </form>
+            </div>
+
+            {error && (
+              <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+                {error}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -37,13 +171,17 @@ function RegisterPage() {
           <h1 className="text-4xl font-display font-bold text-foreground tracking-tight mb-1">
             Share Plate
           </h1>
-          <p className="text-muted-foreground text-sm">Dinner planning for your group</p>
+          <p className="text-muted-foreground text-sm">
+            Dinner planning for your group
+          </p>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
-          <h2 className="text-lg font-display font-semibold mb-6">Create account</h2>
+          <h2 className="text-lg font-display font-semibold mb-6">
+            Create account
+          </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -79,7 +217,9 @@ function RegisterPage() {
                 minLength={8}
                 required
               />
-              <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters
+              </p>
             </div>
 
             {error && (
@@ -89,13 +229,16 @@ function RegisterPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account…" : "Create account"}
+              {loading ? 'Creating account…' : 'Create account'}
             </Button>
           </form>
 
           <p className="mt-5 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link to="/login" className="text-primary font-medium hover:underline">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="text-primary font-medium hover:underline"
+            >
               Sign in
             </Link>
           </p>

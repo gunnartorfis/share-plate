@@ -11,7 +11,8 @@
     "next": "Next",
     "submit": "Submit",
     "search": "Search",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "recipe": "recipe"
   },
   "auth": {
     "login": "Login",
@@ -33,7 +34,22 @@
   },
   "home": {
     "title": "Share Plate",
-    "subtitle": "Plan meals together"
+    "subtitle": "Plan meals together",
+    "inviteCode": "Invite code:",
+    "copied": "Copied!",
+    "leave": "Leave home",
+    "leaveConfirm": "Leave this home?",
+    "members": "Members",
+    "membersLabel": "Members:",
+    "planner": "Planner",
+    "membersTab": "Members",
+    "weekOf": "Week of",
+    "mealName": "Meal name",
+    "notes": "Notes",
+    "recipeUrl": "Recipe URL",
+    "saving": "Saving...",
+    "tapToAdd": "Tap to add",
+    "clickToAdd": "Click to add"
   },
   "planner": {
     "title": "Meal Planner",
@@ -58,5 +74,17 @@
     "language": "Language",
     "theme": "Theme",
     "notifications": "Notifications"
+  },
+  "days": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  },
+  "meals": {
+    "dinner": "Dinner"
   }
 }

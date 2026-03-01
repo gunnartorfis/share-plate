@@ -11,7 +11,8 @@
     "next": "Næsta",
     "submit": "Senda",
     "search": "Leita",
-    "noResults": "Engar niðurstöður"
+    "noResults": "Engar niðurstöður",
+    "recipe": "uppskrift"
   },
   "auth": {
     "login": "Innskrá",
@@ -33,7 +34,22 @@
   },
   "home": {
     "title": "Share Plate",
-    "subtitle": "Skipuleggðu máltíðir saman"
+    "subtitle": "Skipuleggðu máltíðir saman",
+    "inviteCode": "Boðskóði:",
+    "copied": "Afritað!",
+    "leave": "Yfirgefa heimili",
+    "leaveConfirm": "Yfirgefa þetta heimili?",
+    "members": "Meðlimir",
+    "membersLabel": "Meðlimir:",
+    "planner": "Matseðill",
+    "membersTab": "Meðlimir",
+    "weekOf": "Vika",
+    "mealName": "Heiti máltíðar",
+    "notes": "Athugasemdir",
+    "recipeUrl": "Recipe URL",
+    "saving": "Vista...",
+    "tapToAdd": "Smelltu til að bæta við",
+    "clickToAdd": "Smelltu til að bæta við"
   },
   "planner": {
     "title": "Matseðill",
@@ -58,5 +74,17 @@
     "language": "Tungumál",
     "theme": "Þema",
     "notifications": "Tilkynningar"
+  },
+  "days": {
+    "mon": "Mán",
+    "tue": "Þri",
+    "wed": "Mið",
+    "thu": "Fim",
+    "fri": "Fös",
+    "sat": "Lau",
+    "sun": "Sun"
+  },
+  "meals": {
+    "dinner": "Kvöldverður"
   }
 }

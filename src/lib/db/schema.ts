@@ -32,6 +32,56 @@ export const groups = sqliteTable('groups', {
     .default(sql`(unixepoch())`),
 })
 
+export const families = sqliteTable('families', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  createdBy: text('created_by')
+    .notNull()
+    .references(() => users.id),
+  inviteCode: text('invite_code').notNull().unique(),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+export const familyMembers = sqliteTable('family_members', {
+  familyId: text('family_id')
+    .notNull()
+    .references(() => families.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['admin', 'member'] })
+    .notNull()
+    .default('member'),
+  joinedAt: integer('joined_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+export const familyMealPlans = sqliteTable('family_meal_plans', {
+  id: text('id').primaryKey(),
+  familyId: text('family_id')
+    .notNull()
+    .references(() => families.id, { onDelete: 'cascade' }),
+  weekStart: text('week_start').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+export const familyDayPlans = sqliteTable('family_day_plans', {
+  id: text('id').primaryKey(),
+  familyMealPlanId: text('family_meal_plan_id')
+    .notNull()
+    .references(() => familyMealPlans.id, { onDelete: 'cascade' }),
+  dayOfWeek: integer('day_of_week').notNull(),
+  mealName: text('meal_name'),
+  notes: text('notes'),
+  recipeUrl: text('recipe_url'),
+  constraintIds: text('constraint_ids').notNull().default('[]'),
+})
+
 export const groupMembers = sqliteTable('group_members', {
   groupId: text('group_id')
     .notNull()
@@ -145,3 +195,7 @@ export type GroupLink = typeof groupLinks.$inferSelect
 export type MealPlan = typeof mealPlans.$inferSelect
 export type DayPlan = typeof dayPlans.$inferSelect
 export type PlanShare = typeof planShares.$inferSelect
+export type Family = typeof families.$inferSelect
+export type FamilyMember = typeof familyMembers.$inferSelect
+export type FamilyMealPlan = typeof familyMealPlans.$inferSelect
+export type FamilyDayPlan = typeof familyDayPlans.$inferSelect
