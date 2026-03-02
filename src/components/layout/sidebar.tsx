@@ -145,7 +145,8 @@ export function Sidebar({ user }: { user: User }) {
                   <DropdownMenuItem
                     onClick={() => changeLanguage('en')}
                     className={cn(
-                      i18n.language === 'en' && 'bg-sidebar-accent',
+                      i18n.language === 'en' &&
+                        'bg-sidebar-accent text-sidebar-accent-foreground',
                     )}
                   >
                     English
@@ -153,7 +154,8 @@ export function Sidebar({ user }: { user: User }) {
                   <DropdownMenuItem
                     onClick={() => changeLanguage('is')}
                     className={cn(
-                      i18n.language === 'is' && 'bg-sidebar-accent',
+                      i18n.language === 'is' &&
+                        'bg-sidebar-accent text-sidebar-accent-foreground',
                     )}
                   >
                     Íslenska

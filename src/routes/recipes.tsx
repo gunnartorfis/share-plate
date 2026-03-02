@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { TagSelector } from '@/components/ui/tag-selector'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/recipes')({ component: RecipesPage })
@@ -59,7 +60,7 @@ function RecipesPage() {
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
-  const [tagsStr, setTagsStr] = useState('')
+  const [selectedTags, setSelectedTags] = useState<Array<string>>([])
   const [saving, setSaving] = useState(false)
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
   const [generatingTags, setGeneratingTags] = useState(false)
@@ -81,7 +82,7 @@ function RecipesPage() {
     setTitle('')
     setUrl('')
     setDescription('')
-    setTagsStr('')
+    setSelectedTags([])
     setMetadata(null)
     setFetchError(null)
     setShowForm(true)
@@ -92,7 +93,7 @@ function RecipesPage() {
     setTitle(recipe.title)
     setUrl(recipe.url ?? '')
     setDescription(recipe.description ?? '')
-    setTagsStr(recipe.tags.join(', '))
+    setSelectedTags(recipe.tags)
     setMetadata(recipe.metadata)
     setFetchError(null)
     setShowForm(true)
@@ -137,24 +138,38 @@ function RecipesPage() {
           if (!description && result.recipe?.description) {
             setDescription(result.recipe.description)
           }
-          if (!tagsStr && result.recipe?.keywords) {
+          if (selectedTags.length === 0 && result.recipe?.keywords) {
             const keywords = result.recipe.keywords
             if (typeof keywords === 'string') {
-              setTagsStr(keywords)
+              setSelectedTags(
+                keywords
+                  .split(',')
+                  .map((t: string) => t.trim())
+                  .filter(Boolean),
+              )
             } else if (Array.isArray(keywords)) {
-              setTagsStr(keywords.join(', '))
+              setSelectedTags(
+                keywords.map((t: string) => t.trim()).filter(Boolean),
+              )
             }
           }
-          if (!tagsStr && result.keywords) {
+          if (selectedTags.length === 0 && result.keywords) {
             const keywords = result.keywords
             if (typeof keywords === 'string') {
-              setTagsStr(keywords)
+              setSelectedTags(
+                keywords
+                  .split(',')
+                  .map((t: string) => t.trim())
+                  .filter(Boolean),
+              )
             } else if (Array.isArray(keywords)) {
-              setTagsStr(keywords.join(', '))
+              setSelectedTags(
+                keywords.map((t: string) => t.trim()).filter(Boolean),
+              )
             }
           }
 
-          if (!tagsStr) {
+          if (selectedTags.length === 0) {
             console.log('[DEBUG] No tags found in metadata, calling AI...')
             setGeneratingTags(true)
             try {
@@ -172,7 +187,7 @@ function RecipesPage() {
 
               if (aiResult && aiResult.tags && aiResult.tags.length > 0) {
                 console.log('[DEBUG] Setting tags:', aiResult.tags)
-                setTagsStr(aiResult.tags.join(', '))
+                setSelectedTags(aiResult.tags)
               } else {
                 console.log('[DEBUG] AI returned no tags')
               }
@@ -198,18 +213,13 @@ function RecipesPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const tags = tagsStr
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean)
-
       await saveRecipe({
         data: {
           id: editing?.id,
           title,
           url: url || undefined,
           description: description || undefined,
-          tags,
+          tags: selectedTags,
           metadata,
         },
       })
@@ -378,19 +388,14 @@ function RecipesPage() {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t('recipes.descriptionPlaceholder')}
                       rows={3}
-                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex w-full rounded-xl border border-input bg-input/30 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="tags">{t('recipes.tagsLabel')}</Label>
-                    <Input
-                      id="tags"
-                      value={tagsStr}
-                      onChange={(e) => setTagsStr(e.target.value)}
-                      placeholder={t('recipes.tagsPlaceholder')}
-                    />
-                  </div>
+                  <TagSelector
+                    selectedTags={selectedTags}
+                    onChange={setSelectedTags}
+                  />
                 </div>
               </form>
               <div className="shrink-0 px-6 py-4 border-t border-border flex gap-2">
