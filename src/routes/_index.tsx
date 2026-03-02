@@ -310,7 +310,6 @@ function HomePage() {
   const [newName, setNewName] = useState('')
   const [renameOpen, setRenameOpen] = useState(false)
   const renameInitialized = useRef(false)
-  const pendingEditDay = useRef<number | null>(null)
 
   useEffect(() => {
     if (renameInitialized.current) return
@@ -379,13 +378,6 @@ function HomePage() {
   useEffect(() => {
     load()
   }, [weekStart, view, month])
-
-  useEffect(() => {
-    if (pendingEditDay.current !== null && mealPlan) {
-      openEdit(pendingEditDay.current)
-      pendingEditDay.current = null
-    }
-  }, [mealPlan])
 
   async function handleSaveDay() {
     if (!mealPlan || editingDay === null) return
@@ -893,7 +885,7 @@ function HomePage() {
                     onClick={() => {
                       const d = new Date(weekStart)
                       d.setDate(d.getDate() - ((currentDate.getDay() + 6) % 7))
-                      pendingEditDay.current = dayOfWeek
+                      openEdit(dayOfWeek)
                       router.navigate({
                         to: '/',
                         search: { week: d.toISOString().slice(0, 10) },

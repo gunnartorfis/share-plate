@@ -131,6 +131,7 @@ export const recipeLinks = sqliteTable('recipe_links', {
   metadata: text('metadata'),
   tags: text('tags').notNull().default('[]'),
   stars: integer('stars').notNull().default(0),
+  curated: integer('curated').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

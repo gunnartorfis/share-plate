@@ -123,23 +123,44 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
       .map((c) => `  - ${c.name}: maximum ${c.frequency} times per week`)
       .join('\n')
 
-    // Load user recipe links - prioritize these in meal suggestions
+    // Load user recipe links + curated recipes
     let linkLines = ''
     const userLinks = await db
       .select()
       .from(recipeLinks)
       .where(eq(recipeLinks.userId, user.id))
 
-    if (userLinks.length > 0) {
-      linkLines =
-        '\n\nYour saved recipes - PRIORITIZE these when planning meals:\n' +
-        userLinks
-          .slice(0, 10)
-          .map(
-            (l) =>
-              `  - ${l.title}: ${l.url}${l.description ? ` (${l.description})` : ''}`,
-          )
-          .join('\n')
+    const curatedLinks = await db
+      .select()
+      .from(recipeLinks)
+      .where(eq(recipeLinks.curated, 1))
+
+    if (userLinks.length > 0 || curatedLinks.length > 0) {
+      const userSection =
+        userLinks.length > 0
+          ? '\n\nYOUR SAVED RECIPES - PRIORITIZE these:\n' +
+            userLinks
+              .slice(0, 8)
+              .map(
+                (l) =>
+                  `  - ${l.title}: ${l.url || ''}${l.description ? ` (${l.description})` : ''}`,
+              )
+              .join('\n')
+          : ''
+
+      const curatedSection =
+        curatedLinks.length > 0
+          ? '\n\nCURATED ICELANDIC RECIPES (deep pockets - feel free to use these freely):\n' +
+            curatedLinks
+              .slice(0, 12)
+              .map(
+                (l) =>
+                  `  - ${l.title}: ${l.url || ''}${l.description ? ` (${l.description})` : ''}`,
+              )
+              .join('\n')
+          : ''
+
+      linkLines = userSection + curatedSection
     }
 
     const weekDate = new Date(data.weekStart + 'T12:00:00')
