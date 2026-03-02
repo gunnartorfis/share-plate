@@ -58,6 +58,7 @@ function RecipesPage() {
   const [editing, setEditing] = useState<RecipeData | null>(null)
 
   const [title, setTitle] = useState('')
+  const [titleDirty, setTitleDirty] = useState(false)
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
   const [selectedTags, setSelectedTags] = useState<Array<string>>([])
@@ -80,6 +81,7 @@ function RecipesPage() {
   function openNew() {
     setEditing(null)
     setTitle('')
+    setTitleDirty(false)
     setUrl('')
     setDescription('')
     setSelectedTags([])
@@ -91,12 +93,37 @@ function RecipesPage() {
   function openEdit(recipe: RecipeData) {
     setEditing(recipe)
     setTitle(recipe.title)
+    setTitleDirty(false)
     setUrl(recipe.url ?? '')
     setDescription(recipe.description ?? '')
     setSelectedTags(recipe.tags)
     setMetadata(recipe.metadata)
     setFetchError(null)
     setShowForm(true)
+  }
+
+  async function handleTitleBlur() {
+    if (!titleDirty || !title.trim() || selectedTags.length > 0) return
+    if (generatingTags) return
+
+    setGeneratingTags(true)
+    try {
+      const result = (await generateRecipeTags({
+        data: {
+          title: title.trim(),
+          description: description || undefined,
+          language: i18n.language,
+        },
+      })) as { tags?: Array<string>; error?: string }
+
+      if (result && result.tags && result.tags.length > 0) {
+        setSelectedTags(result.tags)
+      }
+    } catch (e) {
+      console.error('AI tagging error:', e)
+    } finally {
+      setGeneratingTags(false)
+    }
   }
 
   async function handleUrlChange(value: string) {
@@ -372,7 +399,11 @@ function RecipesPage() {
                     <Input
                       id="title"
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value)
+                        setTitleDirty(true)
+                      }}
+                      onBlur={handleTitleBlur}
                       required
                       placeholder={t('recipes.titlePlaceholder')}
                     />
