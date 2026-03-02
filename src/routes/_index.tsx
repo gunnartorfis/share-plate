@@ -308,6 +308,7 @@ function HomePage() {
       const completed = await getHomeSetupCompleted()
       if (!completed) {
         setRenameOpen(true)
+        markHomeSetupCompleted()
       }
     }
     checkSetup()
@@ -522,12 +523,8 @@ function HomePage() {
           <div>
             <Dialog
               open={renameOpen}
-              onOpenChange={async (open) => {
-                if (!open) {
-                  await markHomeSetupCompleted()
-                } else {
-                  setNewName(home.name)
-                }
+              onOpenChange={(open) => {
+                if (open) setNewName(home.name)
                 setRenameOpen(open)
               }}
             >
