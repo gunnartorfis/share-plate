@@ -108,7 +108,16 @@
     "noPreviousDinners": "No previous dinners",
     "noPreviousUrls": "No saved links",
     "shareWithGroups": "Share this week with groups",
-    "aiGenerationFailed": "Couldn't generate a plan"
+    "aiGenerationFailed": "Couldn't generate a plan",
+    "searchRecipes": "Search your recipes...",
+    "selectRecipe": "Select a recipe",
+    "createNewRecipe": "Create new recipe",
+    "backToSearch": "Back to search",
+    "noRecipesFound": "No recipes match your search",
+    "noRecipesSaved": "No saved recipes yet",
+    "selectedRecipe": "Selected recipe",
+    "clearSelection": "Clear",
+    "saveAndAssign": "Save recipe & assign"
   },
   "groups": {
     "title": "Groups",

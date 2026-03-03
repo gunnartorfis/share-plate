@@ -108,7 +108,16 @@
     "noPreviousDinners": "Engir fyrri kvöldverðir",
     "noPreviousUrls": "Engir vistaðir hlekkir",
     "shareWithGroups": "Deila þessari viku með hópum",
-    "aiGenerationFailed": "Tókst ekki að búa til matsskipulag"
+    "aiGenerationFailed": "Tókst ekki að búa til matsskipulag",
+    "searchRecipes": "Leita í uppskriftum...",
+    "selectRecipe": "Veldu uppskrift",
+    "createNewRecipe": "Búa til nýja uppskrift",
+    "backToSearch": "Til baka í leit",
+    "noRecipesFound": "Engar uppskriftir fundust",
+    "noRecipesSaved": "Engar vistaðar uppskriftir",
+    "selectedRecipe": "Valin uppskrift",
+    "clearSelection": "Hreinsa",
+    "saveAndAssign": "Vista uppskrift og velja"
   },
   "groups": {
     "title": "Hópar",

@@ -1,74 +1,33 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
-import {
-  deleteRecipe,
-  fetchRecipeMetadata,
-  generateRecipeTags,
-  getMyRecipes,
-  saveRecipe,
-} from '@/lib/server/recipes'
+import { deleteRecipe, getMyRecipes } from '@/lib/server/recipes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TagSelector } from '@/components/ui/tag-selector'
 import { cn } from '@/lib/utils'
+import { useRecipeForm } from '@/hooks/use-recipe-form'
+import type { RecipeData, RecipeMetadata } from '@/hooks/use-recipe-form'
 
 export const Route = createFileRoute('/recipes')({ component: RecipesPage })
 
 const HTTP_PROTOCOL = 'http'
-const ERROR_KEY = 'error'
-
-type RecipeData = {
-  id: string
-  title: string
-  url: string | null
-  description: string | null
-  tags: Array<string>
-  metadata: RecipeMetadata | null
-}
-
-type RecipeMetadata = {
-  title?: string
-  description?: string
-  image?: string
-  keywords?: string | Array<string>
-  recipe?: {
-    name?: string
-    description?: string
-    image?: string | Array<string>
-    prepTime?: string
-    cookTime?: string
-    totalTime?: string
-    recipeYield?: string | number
-    recipeIngredient?: Array<string>
-    recipeInstructions?: Array<string> | Array<{ text?: string }>
-    nutrition?: { calories?: string }
-    keywords?: string | Array<string>
-    author?: string
-    publishedAt?: string
-  }
-}
 
 function RecipesPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [recipes, setRecipes] = useState<Array<RecipeData>>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<RecipeData | null>(null)
 
-  const [title, setTitle] = useState('')
-  const [titleDirty, setTitleDirty] = useState(false)
-  const [url, setUrl] = useState('')
-  const [description, setDescription] = useState('')
-  const [selectedTags, setSelectedTags] = useState<Array<string>>([])
-  const [saving, setSaving] = useState(false)
-  const [fetchingMetadata, setFetchingMetadata] = useState(false)
-  const [generatingTags, setGeneratingTags] = useState(false)
-  const [metadata, setMetadata] = useState<RecipeMetadata | null>(null)
-  const [fetchError, setFetchError] = useState<string | null>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const form = useRecipeForm({
+    onSaved: async () => {
+      await load()
+      setShowForm(false)
+    },
+  })
 
   async function load() {
     setLoading(true)
@@ -86,177 +45,19 @@ function RecipesPage() {
 
   function openNew() {
     setEditing(null)
-    setTitle('')
-    setTitleDirty(false)
-    setUrl('')
-    setDescription('')
-    setSelectedTags([])
-    setMetadata(null)
-    setFetchError(null)
+    form.reset()
     setShowForm(true)
   }
 
   function openEdit(recipe: RecipeData) {
     setEditing(recipe)
-    setTitle(recipe.title)
-    setTitleDirty(false)
-    setUrl(recipe.url ?? '')
-    setDescription(recipe.description ?? '')
-    setSelectedTags(recipe.tags)
-    setMetadata(recipe.metadata)
-    setFetchError(null)
+    form.loadFromExisting(recipe)
     setShowForm(true)
-  }
-
-  async function handleTitleBlur() {
-    if (!titleDirty || !title.trim() || selectedTags.length > 0) return
-    if (generatingTags) return
-
-    setGeneratingTags(true)
-    try {
-      const result = (await generateRecipeTags({
-        data: {
-          title: title.trim(),
-          description: description || undefined,
-          language: i18n.language,
-        },
-      })) as { tags?: Array<string>; error?: string }
-
-      if (result && result.tags && result.tags.length > 0) {
-        setSelectedTags(result.tags)
-      }
-    } catch (e) {
-      console.error('AI tagging error:', e)
-    } finally {
-      setGeneratingTags(false)
-    }
-  }
-
-  async function handleUrlChange(value: string) {
-    setUrl(value)
-    setFetchError(null)
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-    }
-
-    if (!value || !value.startsWith(HTTP_PROTOCOL)) {
-      setMetadata(null)
-      return
-    }
-
-    if (editing?.url === value && editing.metadata) {
-      setMetadata(editing.metadata)
-      return
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setFetchingMetadata(true)
-      try {
-        const result = (await fetchRecipeMetadata({
-          data: { url: value },
-        })) as RecipeMetadata
-
-        if (result && ERROR_KEY in result) {
-          setFetchError(t('recipes.fetchError'))
-          setMetadata(null)
-        } else if (result && (result.title || result.recipe)) {
-          setMetadata(result)
-          if (!title && result.title) {
-            setTitle(result.title)
-          }
-          if (!description && result.description) {
-            setDescription(result.description)
-          }
-          if (!description && result.recipe?.description) {
-            setDescription(result.recipe.description)
-          }
-          if (selectedTags.length === 0 && result.recipe?.keywords) {
-            const keywords = result.recipe.keywords
-            if (typeof keywords === 'string') {
-              setSelectedTags(
-                keywords
-                  .split(',')
-                  .map((t: string) => t.trim())
-                  .filter(Boolean),
-              )
-            } else if (Array.isArray(keywords)) {
-              setSelectedTags(
-                keywords.map((t: string) => t.trim()).filter(Boolean),
-              )
-            }
-          }
-          if (selectedTags.length === 0 && result.keywords) {
-            const keywords = result.keywords
-            if (typeof keywords === 'string') {
-              setSelectedTags(
-                keywords
-                  .split(',')
-                  .map((t: string) => t.trim())
-                  .filter(Boolean),
-              )
-            } else if (Array.isArray(keywords)) {
-              setSelectedTags(
-                keywords.map((t: string) => t.trim()).filter(Boolean),
-              )
-            }
-          }
-
-          if (selectedTags.length === 0) {
-            setGeneratingTags(true)
-            try {
-              const aiResult = (await generateRecipeTags({
-                data: {
-                  title: result.title || result.recipe?.name || '',
-                  description: result.description || result.recipe?.description,
-                  ingredients: result.recipe?.recipeIngredient,
-                  url: value,
-                  language: i18n.language,
-                },
-              })) as { tags?: Array<string>; error?: string }
-
-              if (aiResult && aiResult.tags && aiResult.tags.length > 0) {
-                setSelectedTags(aiResult.tags)
-              } else {
-                setSelectedTags([])
-              }
-            } catch (e) {
-              console.error('AI error:', e)
-            } finally {
-              setGeneratingTags(false)
-            }
-          }
-        } else {
-          setMetadata(null)
-        }
-      } catch {
-        setFetchError('Failed to fetch recipe')
-        setMetadata(null)
-      } finally {
-        setFetchingMetadata(false)
-      }
-    }, 800)
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    setSaving(true)
-    try {
-      await saveRecipe({
-        data: {
-          id: editing?.id,
-          title,
-          url: url || undefined,
-          description: description || undefined,
-          tags: selectedTags,
-          metadata,
-        },
-      })
-      await load()
-      setShowForm(false)
-    } finally {
-      setSaving(false)
-    }
+    await form.handleSave()
   }
 
   async function handleDelete(id: string) {
@@ -342,22 +143,22 @@ function RecipesPage() {
                       <Input
                         id="url"
                         type="url"
-                        value={url}
-                        onChange={(e) => handleUrlChange(e.target.value)}
+                        value={form.url}
+                        onChange={(e) => form.handleUrlChange(e.target.value)}
                         placeholder="https://..."
                         className={cn(
                           'pr-10 h-12 text-base transition-all',
-                          fetchingMetadata &&
+                          form.fetchingMetadata &&
                             'border-amber-400 ring-2 ring-amber-100',
                         )}
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {fetchingMetadata ? (
+                        {form.fetchingMetadata ? (
                           <div className="relative w-5 h-5">
                             <div className="absolute inset-0 rounded-full border-2 border-amber-200 border-t-amber-500 animate-spin" />
                             <SparkleIcon className="absolute inset-0 w-5 h-5 text-amber-500 animate-pulse" />
                           </div>
-                        ) : url.startsWith(HTTP_PROTOCOL) && metadata ? (
+                        ) : form.url.startsWith(HTTP_PROTOCOL) && form.metadata ? (
                           <CheckIcon className="w-5 h-5 text-green-500" />
                         ) : (
                           <LinkIcon className="w-5 h-5 text-muted-foreground" />
@@ -365,39 +166,39 @@ function RecipesPage() {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {fetchingMetadata
+                      {form.fetchingMetadata
                         ? t('recipes.scanning')
-                        : url.startsWith(HTTP_PROTOCOL)
+                        : form.url.startsWith(HTTP_PROTOCOL)
                           ? t('recipes.pasteHint')
                           : t('recipes.urlHint')}
                     </p>
                   </div>
 
-                  {(fetchingMetadata || generatingTags) && (
+                  {(form.fetchingMetadata || form.generatingTags) && (
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
                       <div className="relative w-6 h-6 flex items-center justify-center">
                         <div className="absolute inset-0 rounded-full border-2 border-amber-200 border-t-amber-500 animate-spin" />
                         <SparkleIcon className="w-4 h-4 text-amber-500 animate-pulse" />
                       </div>
                       <span className="text-sm text-amber-800">
-                        {generatingTags
+                        {form.generatingTags
                           ? t('recipes.generatingTags')
                           : t('recipes.scanning')}
                       </span>
                     </div>
                   )}
 
-                  {fetchError && (
+                  {form.fetchError && (
                     <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                      {fetchError}
+                      {form.fetchError}
                     </div>
                   )}
 
-                  {metadata && (metadata.recipe || metadata.image) && (
+                  {form.metadata && (form.metadata.recipe || form.metadata.image) && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <RecipePreviewCard
-                        metadata={metadata}
-                        onClear={() => setMetadata(null)}
+                        metadata={form.metadata}
+                        onClear={() => form.setMetadata(null)}
                       />
                     </div>
                   )}
@@ -406,12 +207,12 @@ function RecipesPage() {
                     <Label htmlFor="title">{t('recipes.titleLabel')}</Label>
                     <Input
                       id="title"
-                      value={title}
+                      value={form.title}
                       onChange={(e) => {
-                        setTitle(e.target.value)
-                        setTitleDirty(true)
+                        form.setTitle(e.target.value)
+                        form.setTitleDirty(true)
                       }}
-                      onBlur={handleTitleBlur}
+                      onBlur={form.handleTitleBlur}
                       required
                       placeholder={t('recipes.titlePlaceholder')}
                     />
@@ -423,8 +224,8 @@ function RecipesPage() {
                     </Label>
                     <textarea
                       id="description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      value={form.description}
+                      onChange={(e) => form.setDescription(e.target.value)}
                       placeholder={t('recipes.descriptionPlaceholder')}
                       rows={3}
                       className="flex w-full rounded-xl border border-input bg-input/30 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -432,8 +233,8 @@ function RecipesPage() {
                   </div>
 
                   <TagSelector
-                    selectedTags={selectedTags}
-                    onChange={setSelectedTags}
+                    selectedTags={form.selectedTags}
+                    onChange={form.setSelectedTags}
                   />
                 </div>
               </form>
@@ -443,7 +244,7 @@ function RecipesPage() {
                   variant="outline"
                   className="flex-1"
                   onClick={() => setShowForm(false)}
-                  disabled={saving}
+                  disabled={form.saving}
                 >
                   {t('common.cancel')}
                 </Button>
@@ -451,9 +252,9 @@ function RecipesPage() {
                   type="submit"
                   form="recipe-form"
                   className="flex-1"
-                  disabled={saving || fetchingMetadata || generatingTags}
+                  disabled={form.saving || form.fetchingMetadata || form.generatingTags}
                 >
-                  {saving ? t('common.saving') : t('common.save')}
+                  {form.saving ? t('common.saving') : t('common.save')}
                 </Button>
               </div>
             </div>
