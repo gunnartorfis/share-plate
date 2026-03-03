@@ -35,13 +35,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import {
   Combobox,
@@ -318,7 +311,8 @@ function HomePage() {
   const [pendingEditDay, setPendingEditDay] = useState<number | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiModalOpen, setAiModalOpen] = useState(false)
-  const [aiTimeframe, setAiTimeframe] = useState(1)
+  const [aiStartDate, setAiStartDate] = useState('')
+  const [aiEndDate, setAiEndDate] = useState('')
   const [aiBudget, setAiBudget] = useState(2)
   const [aiHealthMode, setAiHealthMode] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -515,10 +509,9 @@ function HomePage() {
   }
 
   function isDateBeingGenerated(date: Date) {
-    if (!aiLoading) return false
-    const genStart = new Date(weekStart + 'T12:00:00')
-    const genEnd = new Date(genStart)
-    genEnd.setDate(genEnd.getDate() + aiTimeframe * 7 - 1)
+    if (!aiLoading || !aiStartDate || !aiEndDate) return false
+    const genStart = new Date(aiStartDate + 'T00:00:00')
+    const genEnd = new Date(aiEndDate + 'T23:59:59')
     return date >= genStart && date <= genEnd
   }
 
@@ -605,38 +598,47 @@ function HomePage() {
 
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Timeframe</label>
-                    <Select
-                      value={aiTimeframe.toString()}
-                      onValueChange={(v) => setAiTimeframe(Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 week</SelectItem>
-                        <SelectItem value="2">2 weeks</SelectItem>
-                        <SelectItem value="3">3 weeks</SelectItem>
-                        <SelectItem value="4">4 weeks</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium">Date Range</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="date"
+                        value={aiStartDate}
+                        onChange={(e) => setAiStartDate(e.target.value)}
+                        className="flex-1"
+                      />
+                      <span className="text-sm text-muted-foreground">to</span>
+                      <Input
+                        type="date"
+                        value={aiEndDate}
+                        onChange={(e) => setAiEndDate(e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Budget</label>
-                    <Select
-                      value={aiBudget.toString()}
-                      onValueChange={(v) => setAiBudget(Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Budget (tight)</SelectItem>
-                        <SelectItem value="2">Balanced</SelectItem>
-                        <SelectItem value="3">Generous</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex rounded-lg border overflow-hidden">
+                      {[
+                        { value: 1, label: 'Budget' },
+                        { value: 2, label: 'Balanced' },
+                        { value: 3, label: 'Generous' },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setAiBudget(option.value)}
+                          className={cn(
+                            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors',
+                            aiBudget === option.value
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-background hover:bg-muted',
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -729,8 +731,8 @@ function HomePage() {
                       try {
                         await generateMealPlan({
                           data: {
-                            weekStart,
-                            timeframe: aiTimeframe,
+                            startDate: aiStartDate,
+                            endDate: aiEndDate,
                             budget: aiBudget,
                             healthMode: aiHealthMode,
                           },
@@ -775,7 +777,51 @@ function HomePage() {
           <div className="flex items-center gap-2">
             <Button
               variant="default"
-              onClick={() => setAiModalOpen(true)}
+              onClick={() => {
+                // Compute default date range
+                const today = new Date()
+                let startDate: Date | null = null
+
+                // Scan forward from today to find first date without dinner
+                for (let i = 0; i < 56; i++) {
+                  const d = new Date(today)
+                  d.setDate(d.getDate() + i)
+                  const ws = new Date(d)
+                  ws.setDate(ws.getDate() - ((ws.getDay() + 6) % 7))
+                  const wsStr = ws.toISOString().slice(0, 10)
+                  const dow = (d.getDay() + 6) % 7
+
+                  let hasMeal = false
+                  // Check current week's mealPlan
+                  if (wsStr === weekStart && mealPlan) {
+                    const day = mealPlan.days.find((dd) => dd.dayOfWeek === dow)
+                    hasMeal = !!day?.mealName
+                  }
+                  // Check monthMealPlans
+                  const weekDays = monthMealPlans[wsStr]
+                  if (weekDays) {
+                    const day = weekDays.find((dd) => dd.dayOfWeek === dow)
+                    if (day) hasMeal = !!day.mealName
+                  }
+
+                  if (!hasMeal) {
+                    startDate = d
+                    break
+                  }
+                }
+
+                if (!startDate) {
+                  startDate = new Date(today)
+                  startDate.setDate(startDate.getDate() + 1)
+                }
+
+                const endDate = new Date(startDate)
+                endDate.setDate(endDate.getDate() + 13)
+
+                setAiStartDate(startDate.toISOString().slice(0, 10))
+                setAiEndDate(endDate.toISOString().slice(0, 10))
+                setAiModalOpen(true)
+              }}
               disabled={aiLoading || isPastWeek}
               className={cn(
                 'gap-2 flex-1 md:flex-none',
