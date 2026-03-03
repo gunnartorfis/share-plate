@@ -60,7 +60,7 @@ Respond ONLY with valid JSON, no other text:
 If no issues, respond: {"issues": []}`
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
   const result = await model.generateContent(validationPrompt)
   const text = result.response.text()
 
@@ -304,7 +304,7 @@ week 0 = first week, day 0 = Monday, day 6 = Sunday. Generate exactly ${weeks * 
 
     for (let loop = 0; loop < MAX_VALIDATION_LOOPS; loop++) {
       const genAI = new GoogleGenerativeAI(apiKey)
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
       const result = await model.generateContent(prompt)
       const text = result.response.text()
 

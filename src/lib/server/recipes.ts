@@ -218,7 +218,7 @@ export const generateRecipeTags = createServerFn({ method: 'POST' })
 
     const { GoogleGenerativeAI } = await import('@google/generative-ai')
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
 
     const ingredientsList = data.ingredients?.slice(0, 10).join(', ') || ''
     const description = data.description || ''
