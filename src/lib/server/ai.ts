@@ -85,8 +85,8 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
   .inputValidator((data: unknown) =>
     z
       .object({
-        weekStart: z.string(),
-        timeframe: z.number().min(1).max(4).default(1),
+        startDate: z.string(),
+        endDate: z.string(),
         budget: z.number().min(1).max(3).default(2),
         healthMode: z.boolean().default(false),
       })
@@ -248,12 +248,47 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
       linkLines = userSection + curatedSection
     }
 
-    const weekDate = new Date(data.weekStart + 'T12:00:00')
-    const weeks = data.timeframe || 1
-    const endDate = new Date(weekDate)
-    endDate.setDate(weekDate.getDate() + weeks * 7 - 1)
+    // Build list of dates in the range
+    const start = new Date(data.startDate + 'T12:00:00')
+    const end = new Date(data.endDate + 'T12:00:00')
+    const datesToPlan: Array<{ date: string; dayName: string; dayOfWeek: number }> = []
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dow = (d.getDay() + 6) % 7 // Mon=0, Sun=6
+      datesToPlan.push({
+        date: d.toISOString().slice(0, 10),
+        dayName: DAY_NAMES[dow],
+        dayOfWeek: dow,
+      })
+    }
+
+    const totalDays = datesToPlan.length
     const fmt = (d: Date) =>
       d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
+
+    // Build per-date constraint info for the prompt
+    const dateConstraintLines = datesToPlan
+      .map((dp) => {
+        const tpl = templates.find((t) => t.dayOfWeek === dp.dayOfWeek)
+        if (!tpl) return `  ${dp.date} (${dp.dayName}): (no constraints)`
+        const ids = JSON.parse(tpl.constraintIds) as Array<string>
+        const constraintDetails = ids
+          .map((id) => {
+            const c = constraintMap.get(id)
+            if (!c) return id
+            const hasNewConstraint = newConstraintIds.has(id)
+            const freq = c.frequency ? ` (max ${c.frequency}x/week)` : ''
+            return (
+              c.name +
+              freq +
+              (hasNewConstraint
+                ? ' (NEW - make it something different from their history!)'
+                : '')
+            )
+          })
+          .join(', ')
+        return `  ${dp.date} (${dp.dayName}): ${constraintDetails || '(no constraints)'}`
+      })
+      .join('\n')
 
     const budgetLabels = {
       1: 'Budget-friendly (tight)',
@@ -269,40 +304,35 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
       : ''
 
     let prompt = `You are a dinner planning assistant helping a family plan their meals.
-${weeks === 1 ? `Week: ${fmt(weekDate)} – ${fmt(endDate)}` : `Period: ${fmt(weekDate)} – ${fmt(endDate)} (${weeks} weeks)`}
+Period: ${fmt(start)} – ${fmt(end)} (${totalDays} days)
 
 ${budgetContext}${healthContext}
 
-Day constraints (these MUST be respected — they reflect real life constraints like busy evenings or dietary preferences):
-${dayConstraintLines}${frequencyConstraints ? '\n\nFrequency limits (strictly respect these):\n' + frequencyConstraints : ''}${historyLines}${linkLines}
+Day constraints per day of week (these MUST be respected — they reflect real life constraints like busy evenings or dietary preferences):
+${dayConstraintLines}
+
+Dates to plan (with their day-of-week constraints applied):
+${dateConstraintLines}${frequencyConstraints ? '\n\nFrequency limits (strictly respect these):\n' + frequencyConstraints : ''}${historyLines}${linkLines}
 
 IMPORTANT: Prioritize using the user's saved recipes listed above when planning meals. Only suggest other meals if you cannot find a suitable match from the saved recipes.
 
-Generate a ${weeks * 7}-day DINNER plan (dinner only — not breakfast or lunch). For each day:
-- Suggest a meal name that fits the constraints
+Generate a ${totalDays}-day DINNER plan (dinner only — not breakfast or lunch). For each date:
+- Suggest a meal name that fits the constraints for that day
 - Keep it realistic for a family with kids
 
 Respond ONLY with valid JSON in this exact format, no other text:
 [
-  {"week": 0, "day": 0, "meal_name": "Spaghetti Bolognese"},
-  {"week": 0, "day": 1, "meal_name": "Grilled Salmon with Vegetables"},
+  {"date": "${datesToPlan[0]?.date || data.startDate}", "meal_name": "Spaghetti Bolognese"},
+  {"date": "${datesToPlan[1]?.date || ''}", "meal_name": "Grilled Salmon with Vegetables"},
   ...
 ]
 
-week 0 = first week, day 0 = Monday, day 6 = Sunday. Generate exactly ${weeks * 7} entries.`
+Generate exactly ${totalDays} entries, one per date.`
 
     let parsed: Array<{
-      week: number
-      day: number
+      date: string
       meal_name: string
-      recipe_url?: string
     }> = []
-
-    const getWeekStart = (weekOffset: number) => {
-      const d = new Date(data.weekStart + 'T12:00:00')
-      d.setDate(d.getDate() + weekOffset * 7)
-      return d.toISOString().slice(0, 10)
-    }
 
     for (let loop = 0; loop < MAX_VALIDATION_LOOPS; loop++) {
       const google = createGoogleGenerativeAI({ apiKey })
@@ -315,14 +345,19 @@ week 0 = first week, day 0 = Monday, day 6 = Sunday. Generate exactly ${weeks * 
       if (!jsonMatch) throw new Error('AI returned invalid response')
 
       parsed = JSON.parse(jsonMatch[0]) as Array<{
-        week: number
-        day: number
+        date: string
         meal_name: string
-        recipe_url?: string
       }>
 
+      // Convert to week/day format for validation
+      const validationFormat = parsed.map((item, i) => ({
+        week: 0,
+        day: i,
+        meal_name: item.meal_name,
+      }))
+
       const issues = await validateMealPlan(
-        parsed,
+        validationFormat,
         historyLines,
         frequencyConstraints,
         apiKey,
@@ -340,12 +375,19 @@ ${issueMessages}
 Please regenerate the meal plan addressing these issues.`
     }
 
-    const daysToInsert = parsed.map((item) => ({
-      weekStart: getWeekStart(item.week),
-      dayOfWeek: item.day,
-      mealName: item.meal_name,
-      constraintIds: [],
-    }))
+    // Map each date to weekStart + dayOfWeek for storage
+    const daysToInsert = parsed.map((item) => {
+      const d = new Date(item.date + 'T12:00:00')
+      const dow = (d.getDay() + 6) % 7
+      const ws = new Date(d)
+      ws.setDate(ws.getDate() - dow)
+      return {
+        weekStart: ws.toISOString().slice(0, 10),
+        dayOfWeek: dow,
+        mealName: item.meal_name,
+        constraintIds: [],
+      }
+    })
 
     await upsertHomeDayPlansBatch({ data: { days: daysToInsert } })
 
