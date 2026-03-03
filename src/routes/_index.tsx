@@ -1161,7 +1161,7 @@ function HomePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="default"
               onClick={() => {
@@ -1220,7 +1220,7 @@ function HomePage() {
                 ? t('planner.generating')
                 : t('planner.generateWithAi')}
             </Button>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               {view === 'month' ? (
                 <>
                   <Button variant="outline" size="icon" onClick={prevMonth}>
@@ -1247,7 +1247,7 @@ function HomePage() {
                 </>
               )}
             </div>
-            <div className="flex items-center border border-border rounded-md overflow-hidden">
+            <div className="flex items-center border border-border rounded-md overflow-hidden shrink-0">
               <button
                 onClick={() => setView('week')}
                 className={cn(
