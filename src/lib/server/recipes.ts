@@ -231,6 +231,8 @@ export const generateRecipeTags = createServerFn({ method: 'POST' })
 - Dietary category (healthy, comfort, light, etc.)
 - Cuisine type (italian, mexican, asian, etc.)
 
+IMPORTANT: Do NOT include tags like "dinner", "kvöldmatur", "main course", "evening meal", or any term that means dinner or evening meal. This app is already for dinner, so such tags are redundant.
+
 Recipe: ${data.title}
 ${description ? `Description: ${description}` : ''}
 ${ingredientsList ? `Ingredients: ${ingredientsList}` : ''}
@@ -249,7 +251,13 @@ Return ONLY a JSON array of strings, like ["fish", "healthy", "baked", "quick"].
 
     try {
       const tags = JSON.parse(jsonMatch[0]) as Array<string>
-      return { tags: tags.filter((t) => typeof t === 'string').slice(0, 5) }
+      const filtered = tags
+        .filter((t) => typeof t === 'string')
+        .filter(
+          (t) =>
+            t.toLowerCase() !== 'kvöldmatur' && t.toLowerCase() !== 'dinner',
+        )
+      return { tags: filtered.slice(0, 5) }
     } catch {
       return { error: 'Failed to parse AI response' }
     }
