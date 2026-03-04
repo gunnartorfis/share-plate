@@ -38,8 +38,8 @@ async function validateMealPlan(
   historyLines: string,
   frequencyConstraints: string,
   apiKey: string,
-): Promise<ValidationIssue[]> {
-  const issues: ValidationIssue[] = []
+): Promise<Array<ValidationIssue>> {
+  const issues: Array<ValidationIssue> = []
 
   const mealList = mealPlan.map((m, i) => `${i}: ${m.meal_name}`).join('\n')
 
@@ -251,7 +251,11 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
     // Build list of dates in the range
     const start = new Date(data.startDate + 'T12:00:00')
     const end = new Date(data.endDate + 'T12:00:00')
-    const datesToPlan: Array<{ date: string; dayName: string; dayOfWeek: number }> = []
+    const datesToPlan: Array<{
+      date: string
+      dayName: string
+      dayOfWeek: number
+    }> = []
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dow = (d.getDay() + 6) % 7 // Mon=0, Sun=6
       datesToPlan.push({

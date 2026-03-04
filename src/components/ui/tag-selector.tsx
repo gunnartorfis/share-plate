@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
+import { createPortal } from 'react-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Cancel01Icon } from '@hugeicons/core-free-icons'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 
 const TEST_TAGS = [
   { key: 'beef', label: 'Beef', category: 'protein' },
@@ -40,14 +41,20 @@ const TEST_TAGS = [
 ] as const
 
 interface TagSelectorProps {
-  selectedTags: string[]
-  onChange: (tags: string[]) => void
+  selectedTags: Array<string>
+  onChange: (tags: Array<string>) => void
 }
 
 export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
+  const anchorRef = useRef<HTMLDivElement | null>(null)
+  const [popupRect, setPopupRect] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
 
   const filteredTags = useMemo(() => {
     if (!search) return [...TEST_TAGS]
@@ -76,6 +83,29 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
     onChange(selectedTags.filter((tag) => tag !== key))
   }
 
+  useEffect(() => {
+    if (!open) return
+
+    const updatePopupPosition = () => {
+      if (!anchorRef.current) return
+      const rect = anchorRef.current.getBoundingClientRect()
+      setPopupRect({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      })
+    }
+
+    updatePopupPosition()
+    window.addEventListener('resize', updatePopupPosition)
+    window.addEventListener('scroll', updatePopupPosition, true)
+
+    return () => {
+      window.removeEventListener('resize', updatePopupPosition)
+      window.removeEventListener('scroll', updatePopupPosition, true)
+    }
+  }, [open])
+
   return (
     <div className="space-y-1.5">
       <Label htmlFor="tags">{t('recipes.tags.label')}</Label>
@@ -97,7 +127,7 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
         </div>
       )}
 
-      <div className="relative">
+      <div ref={anchorRef} className="relative">
         <input
           type="text"
           className="flex w-full rounded-4xl border border-input bg-input/30 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -110,8 +140,20 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
         />
-        {open && filteredTags.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-popup border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+      </div>
+      {open &&
+        filteredTags.length > 0 &&
+        popupRect &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="fixed z-[220] max-h-60 overflow-auto rounded-md border border-border bg-popup shadow-lg"
+            style={{
+              top: popupRect.top,
+              left: popupRect.left,
+              width: popupRect.width,
+            }}
+          >
             {filteredTags.map(({ key, label }) => (
               <div
                 key={key}
@@ -126,9 +168,9 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
                 {label}
               </div>
             ))}
-          </div>
+          </div>,
+          document.body,
         )}
-      </div>
     </div>
   )
 }

@@ -6,7 +6,7 @@ import {
   saveRecipe,
 } from '@/lib/server/recipes'
 
-const HTTP_PROTOCOL = 'http'
+const URL_PREFIX = 'http'
 const ERROR_KEY = 'error'
 
 export type RecipeMetadata = {
@@ -83,21 +83,22 @@ export function useRecipeForm(options?: UseRecipeFormOptions) {
     setFetchError(null)
   }
 
-  async function handleTitleBlur() {
-    if (!titleDirty || !title.trim() || selectedTags.length > 0) return
+  async function generateTagsForTitle(titleOverride?: string) {
+    const candidateTitle = (titleOverride ?? title).trim()
+    if (!candidateTitle || selectedTags.length > 0) return
     if (generatingTags) return
 
     setGeneratingTags(true)
     try {
       const result = (await generateRecipeTags({
         data: {
-          title: title.trim(),
+          title: candidateTitle,
           description: description || undefined,
           language: i18n.language,
         },
       })) as { tags?: Array<string>; error?: string }
 
-      if (result && result.tags && result.tags.length > 0) {
+      if (result.tags && result.tags.length > 0) {
         setSelectedTags(result.tags)
       }
     } catch (e) {
@@ -105,6 +106,11 @@ export function useRecipeForm(options?: UseRecipeFormOptions) {
     } finally {
       setGeneratingTags(false)
     }
+  }
+
+  async function handleTitleBlur() {
+    if (!titleDirty || !title.trim()) return
+    await generateTagsForTitle()
   }
 
   async function handleUrlChange(value: string) {
@@ -115,7 +121,7 @@ export function useRecipeForm(options?: UseRecipeFormOptions) {
       clearTimeout(debounceRef.current)
     }
 
-    if (!value || !value.startsWith(HTTP_PROTOCOL)) {
+    if (!value || !value.startsWith(URL_PREFIX)) {
       setMetadata(null)
       return
     }
@@ -228,8 +234,8 @@ export function useRecipeForm(options?: UseRecipeFormOptions) {
           metadata,
         },
       })
-      options?.onSaved?.(id as string)
-      return id as string
+      options?.onSaved?.(id)
+      return id
     } finally {
       setSaving(false)
     }
@@ -253,6 +259,7 @@ export function useRecipeForm(options?: UseRecipeFormOptions) {
     setMetadata,
     fetchError,
     handleUrlChange,
+    generateTagsForTitle,
     handleTitleBlur,
     handleSave,
     reset,

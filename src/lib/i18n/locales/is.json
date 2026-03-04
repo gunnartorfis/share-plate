@@ -52,16 +52,26 @@
   },
   "subscriptions": {
     "title": "Fylgjast með",
-    "mySubscriptions": "Fylgjast með",
+    "myHome": "Mitt heimili",
     "myHomes": "Mín heimili",
+    "following": "Fylgjast með",
     "discover": "Uppgötva",
     "noSubscriptions": "Ekki fylgst með neinum enn",
     "nothingToDiscover": "Ekkert að uppgötva",
     "unsubscribe": "Hætta að fylgjast með",
+    "unfollow": "Hætta að fylgjast",
     "subscribe": "Fylgjast með",
+    "follow": "Fylgja",
     "code": "Kóði",
     "enterCode": "Slá inn boðskóða...",
-    "join": "Fylgjast með"
+    "join": "Fylgja",
+    "notFollowingTitle": "Byrja að fylgjast með öðrum heimilum",
+    "notFollowingDesc": "Fylgstu vinum og fjölskyldu til að sjá máltíðaskrárnar þeirra og fá innblástur fyrir þínar eigin matsöfn.",
+    "whatIsFollowing": "Hvað þýðir að fylgjast?",
+    "followingExplanation": "Þegar þú fylgist með öðru heimili geturðu séð máltíðaskrárnar þeirra í flæðinu þínu. Það er frábær leið til að fá uppskriftahugmyndir frá fólki sem þú þekkir.",
+    "nearby": "Heimili sem þú getur fylgst með",
+    "homesCount": "{{count}} heimili fylgt",
+    "homesCount_plural": "{{count}} heimilum fylgt"
   },
   "home": {
     "title": "PlatePool",

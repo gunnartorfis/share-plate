@@ -11,7 +11,14 @@ const icelandicRecipes = [
     description:
       'Traditional Icelandic lamb soup with potatoes, carrots, cabbage, and fresh herbs. The ultimate comfort food.',
     url: '',
-    tags: JSON.stringify(['lamb', 'soup', 'traditional', 'comfort', 'winter', 'dinner']),
+    tags: JSON.stringify([
+      'lamb',
+      'soup',
+      'traditional',
+      'comfort',
+      'winter',
+      'dinner',
+    ]),
     stars: 5,
     curated: 1,
   },
@@ -66,7 +73,13 @@ const icelandicRecipes = [
     description:
       'Traditional fish stew with cod or haddock, potatoes, onion, and butter. Served with dark rye bread.',
     url: '',
-    tags: JSON.stringify(['fish', 'seafood', 'traditional', 'comfort', 'dinner']),
+    tags: JSON.stringify([
+      'fish',
+      'seafood',
+      'traditional',
+      'comfort',
+      'dinner',
+    ]),
     stars: 5,
     curated: 1,
   },
@@ -75,7 +88,13 @@ const icelandicRecipes = [
     description:
       'Salt cod simmered and served with boiled potatoes, onions, and butter. A true Icelandic classic.',
     url: '',
-    tags: JSON.stringify(['fish', 'seafood', 'traditional', 'dinner', 'salt cod']),
+    tags: JSON.stringify([
+      'fish',
+      'seafood',
+      'traditional',
+      'dinner',
+      'salt cod',
+    ]),
     stars: 5,
     curated: 1,
   },

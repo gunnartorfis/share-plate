@@ -793,7 +793,7 @@ export const getHomeMealPlansForMonth = createServerFn({ method: 'GET' })
     const endWeek = new Date(lastDay)
     endWeek.setDate(endWeek.getDate() + ((7 - lastDay.getDay()) % 7))
 
-    const weekStarts: string[] = []
+    const weekStarts: Array<string> = []
     const current = new Date(startWeek)
     while (current <= endWeek) {
       const day = current.getDay()

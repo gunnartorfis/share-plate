@@ -1,7 +1,7 @@
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { register, markHomeSetupCompleted } from '@/lib/server/auth'
+import { markHomeSetupCompleted, register } from '@/lib/server/auth'
 import { createHome, joinHome } from '@/lib/server/homes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

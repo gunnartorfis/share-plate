@@ -7,9 +7,11 @@ import type { Constraint } from '@/lib/db/schema'
 import type { RecipeData } from '@/hooks/use-recipe-form'
 import { useRecipeForm } from '@/hooks/use-recipe-form'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
 import { TagSelector } from '@/components/ui/tag-selector'
 import {
   ArrowLeftIcon,
@@ -30,8 +32,6 @@ export type DrawerFormProps = {
   meal: string
   /** Recipe URL derived from recipe selection (visible but read-only in form) */
   recipeUrl: string
-  editNotes: string
-  setEditNotes: (v: string) => void
   editConstraintIds: Array<string>
   setEditConstraintIds: Dispatch<SetStateAction<Array<string>>>
   constraints: Array<Constraint>
@@ -64,8 +64,6 @@ export function DrawerForm({
   weekStart,
   meal,
   recipeUrl,
-  editNotes,
-  setEditNotes,
   editConstraintIds,
   setEditConstraintIds,
   constraints,
@@ -98,10 +96,6 @@ export function DrawerForm({
     },
   })
 
-  const selectedRecipe = selectedRecipeId
-    ? (recipes.find((r) => r.id === selectedRecipeId) ?? null)
-    : null
-
   const filteredRecipes = recipes.filter((r) => {
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
@@ -111,177 +105,206 @@ export function DrawerForm({
     )
   })
 
+  const constraintsBlock =
+    constraints.length > 0 ? (
+      <div className="space-y-2 rounded-2xl border border-border/70 bg-card/85 p-4 shadow-sm">
+        <label className="mb-2 block text-sm font-medium">
+          {t('settings.constraints')}
+        </label>
+        <Separator className="mb-3" />
+        <div className="flex flex-wrap gap-2">
+          {constraints.map((c) => {
+            const active = editConstraintIds.includes(c.id)
+            return (
+              <button
+                key={c.id}
+                onClick={() =>
+                  setEditConstraintIds((prev) =>
+                    active
+                      ? prev.filter((id) => id !== c.id)
+                      : [...prev, c.id],
+                  )
+                }
+                className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-sm font-medium transition-all"
+                style={
+                  active
+                    ? {
+                        backgroundColor: c.color + '22',
+                        color: c.color,
+                        borderColor: c.color,
+                      }
+                    : undefined
+                }
+              >
+                {c.emoji && <span>{c.emoji}</span>}
+                {c.name}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    ) : null
+
   return (
-    <>
-      <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
-        <h2 className="text-lg font-display font-semibold">{fullDate}</h2>
-        <button
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1"
-        >
-          <XIcon className="w-5 h-5" />
-        </button>
+    <div className="relative flex h-full flex-col overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -right-24 -top-24 h-52 w-52 rounded-full bg-primary/12 blur-3xl" />
+        <div className="absolute -left-16 top-44 h-44 w-44 rounded-full bg-accent/14 blur-3xl" />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-5">
+      <div className="relative shrink-0 border-b border-border/70 bg-background/85 px-5 py-4 backdrop-blur-xl">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <Badge variant="outline" className="bg-background/70">
+              {t('planner.dinner')}
+            </Badge>
+            <h2 className="text-xl font-display font-semibold leading-tight">
+              {fullDate}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-full border border-border/70 bg-background/80 p-2 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="relative flex-1 min-h-0 px-5 py-5">
         {formMode === 'search' && (
-          <div className="space-y-3">
-            <label className="text-sm font-medium mb-1.5 block">
-              {t('planner.selectRecipe')}
-            </label>
+          <div className="flex h-full min-h-0 flex-col gap-4">
+            <div className="flex min-h-[24rem] flex-1 flex-col gap-3 rounded-2xl border border-border/70 bg-card/85 p-4 shadow-sm md:min-h-[30rem]">
+              <label className="mb-1.5 block text-sm font-medium">
+                {t('planner.selectRecipe')}
+              </label>
 
-            {/* Search input */}
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('planner.searchRecipes')}
-                className="pl-9"
-                autoFocus
-              />
-            </div>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('planner.searchRecipes')}
+                  className="h-10 rounded-xl border-border/80 bg-background/80 pl-9"
+                  autoFocus
+                />
+              </div>
 
-            {/* Selected recipe card */}
-            {selectedRecipe ? (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                {getRecipeImage(selectedRecipe) && (
-                  <div className="w-10 h-10 rounded-md overflow-hidden shrink-0 bg-muted">
-                    <img
-                      src={getRecipeImage(selectedRecipe)!}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
+              {meal && !selectedRecipeId ? (
+                <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-muted/45 p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{meal}</p>
+                    {recipeUrl && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {safeHostname(recipeUrl)}
+                      </p>
+                    )}
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {selectedRecipe.title}
-                  </p>
-                  {selectedRecipe.url && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {safeHostname(selectedRecipe.url)}
-                    </p>
-                  )}
                 </div>
-                <button
-                  onClick={() => setSelectedRecipeId(null)}
-                  className="text-xs text-amber-700 hover:text-amber-900 font-medium shrink-0"
-                >
-                  {t('planner.clearSelection')}
-                </button>
-              </div>
-            ) : meal ? (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{meal}</p>
-                  {recipeUrl && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {safeHostname(recipeUrl)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : null}
+              ) : null}
 
-            {/* Recipe list */}
-            <div className="space-y-1 max-h-[280px] overflow-y-auto">
-              {recipesLoading && recipes.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p className="text-sm">{t('common.loading')}</p>
-                </div>
-              ) : filteredRecipes.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p className="text-sm">
-                    {recipes.length === 0
-                      ? t('planner.noRecipesSaved')
-                      : t('planner.noRecipesFound')}
-                  </p>
-                </div>
-              ) : (
-                filteredRecipes.map((recipe) => {
-                  const imageUrl = getRecipeImage(recipe)
-                  const isSelected = recipe.id === selectedRecipeId
-                  return (
-                    <button
-                      key={recipe.id}
-                      onClick={() =>
-                        setSelectedRecipeId(isSelected ? null : recipe.id)
-                      }
-                      className={cn(
-                        'w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all',
-                        isSelected
-                          ? 'bg-amber-50 border border-amber-200'
-                          : 'hover:bg-accent border border-transparent',
-                      )}
-                    >
-                      {imageUrl && (
-                        <div className="w-10 h-10 rounded-md overflow-hidden shrink-0 bg-muted">
-                          <img
-                            src={imageUrl}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {recipe.title}
-                        </p>
-                        {recipe.url && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {safeHostname(recipe.url)}
-                          </p>
+              <div className="flex-1 space-y-1 overflow-y-auto rounded-xl border border-border/65 bg-background/70 p-1.5">
+                {recipesLoading && recipes.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <p className="text-sm">{t('common.loading')}</p>
+                  </div>
+                ) : filteredRecipes.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <p className="text-sm">
+                      {recipes.length === 0
+                        ? t('planner.noRecipesSaved')
+                        : t('planner.noRecipesFound')}
+                    </p>
+                  </div>
+                ) : (
+                  filteredRecipes.map((recipe) => {
+                    const imageUrl = getRecipeImage(recipe)
+                    const isSelected = recipe.id === selectedRecipeId
+                    return (
+                      <button
+                        key={recipe.id}
+                        onClick={() => {
+                          setSelectedRecipeId(isSelected ? null : recipe.id)
+                          if (!isSelected) {
+                            setSearchQuery('')
+                          }
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-lg border p-2.5 text-left transition-all',
+                          isSelected
+                            ? 'border-primary/45 bg-primary/8 shadow-sm'
+                            : 'border-transparent hover:border-primary/25 hover:bg-accent/45',
                         )}
-                        {recipe.tags.length > 0 && (
-                          <div className="flex gap-1 mt-1 flex-wrap">
-                            {recipe.tags.slice(0, 3).map((tag) => (
-                              <span
-                                key={tag}
-                                className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded text-[10px]"
-                              >
-                                {tag}
-                              </span>
-                            ))}
+                      >
+                        {imageUrl && (
+                          <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-muted">
+                            <img
+                              src={imageUrl}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
                           </div>
                         )}
-                      </div>
-                      {isSelected && (
-                        <CheckIcon className="w-4 h-4 text-amber-500 shrink-0" />
-                      )}
-                    </button>
-                  )
-                })
-              )}
-            </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium leading-tight">
+                            {recipe.title}
+                          </p>
+                          {recipe.tags.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {recipe.tags.slice(0, 2).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <CheckIcon className="h-4 w-4 shrink-0 text-primary" />
+                        )}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
 
-            {/* Create new recipe button */}
-            <button
-              onClick={() => {
-                recipeForm.reset()
+              <button
+                onClick={() => {
+                  const maybePrefill = searchQuery.trim()
+                  recipeForm.reset()
+                if (filteredRecipes.length === 0 && maybePrefill) {
+                  recipeForm.setTitle(maybePrefill)
+                  recipeForm.setTitleDirty(true)
+                  void recipeForm.generateTagsForTitle(maybePrefill)
+                }
                 setFormMode('create')
               }}
-              className="w-full flex items-center gap-2 p-3 rounded-lg border border-dashed border-border hover:border-primary/40 hover:bg-accent text-muted-foreground hover:text-foreground transition-all"
-            >
-              <PlusIcon className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {t('planner.createNewRecipe')}
-              </span>
-            </button>
+                className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 bg-background/60 p-3 text-muted-foreground transition-all hover:border-primary/45 hover:bg-accent/40 hover:text-foreground"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {t('planner.createNewRecipe')}
+                </span>
+              </button>
+            </div>
+            {constraintsBlock}
           </div>
         )}
 
         {formMode === 'create' && (
-          <div className="space-y-4">
-            <button
-              onClick={() => setFormMode('search')}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-              {t('planner.backToSearch')}
-            </button>
+          <div className="h-full min-h-0 overflow-y-auto space-y-4">
+            <div className="space-y-4 rounded-2xl border border-border/70 bg-card/85 p-4 shadow-sm">
+              <button
+                onClick={() => setFormMode('search')}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ArrowLeftIcon className="h-4 w-4" />
+                {t('planner.backToSearch')}
+              </button>
 
-            {/* URL input */}
             <div className="space-y-2">
               <Label htmlFor="drawer-url">{t('recipes.urlLabel')}</Label>
               <div className="relative">
@@ -292,22 +315,22 @@ export function DrawerForm({
                   onChange={(e) => recipeForm.handleUrlChange(e.target.value)}
                   placeholder="https://..."
                   className={cn(
-                    'pr-10',
+                    'h-10 rounded-xl border-border/80 bg-background/80 pr-10',
                     recipeForm.fetchingMetadata &&
-                      'border-amber-400 ring-2 ring-amber-100',
+                      'border-primary/55 ring-2 ring-primary/20',
                   )}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {recipeForm.fetchingMetadata ? (
-                    <div className="relative w-5 h-5">
-                      <div className="absolute inset-0 rounded-full border-2 border-amber-200 border-t-amber-500 animate-spin" />
-                      <SparkleIcon className="absolute inset-0 w-5 h-5 text-amber-500 animate-pulse" />
+                    <div className="relative h-5 w-5">
+                      <div className="absolute inset-0 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+                      <SparkleIcon className="absolute inset-0 h-5 w-5 animate-pulse text-primary" />
                     </div>
                   ) : recipeForm.url.startsWith(URL_PREFIX) &&
                     recipeForm.metadata ? (
-                    <CheckIcon className="w-5 h-5 text-green-500" />
+                    <CheckIcon className="h-5 w-5 text-green-500" />
                   ) : (
-                    <LinkIcon className="w-5 h-5 text-muted-foreground" />
+                    <LinkIcon className="h-5 w-5 text-muted-foreground" />
                   )}
                 </div>
               </div>
@@ -320,14 +343,13 @@ export function DrawerForm({
               </p>
             </div>
 
-            {/* Loading indicator */}
             {(recipeForm.fetchingMetadata || recipeForm.generatingTags) && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                <div className="relative w-6 h-6 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-2 border-amber-200 border-t-amber-500 animate-spin" />
-                  <SparkleIcon className="w-4 h-4 text-amber-500 animate-pulse" />
+              <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/8 p-3">
+                <div className="relative flex h-6 w-6 items-center justify-center">
+                  <div className="absolute inset-0 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+                  <SparkleIcon className="h-4 w-4 animate-pulse text-primary" />
                 </div>
-                <span className="text-sm text-amber-800">
+                <span className="text-sm text-primary">
                   {recipeForm.generatingTags
                     ? t('recipes.generatingTags')
                     : t('recipes.scanning')}
@@ -335,14 +357,12 @@ export function DrawerForm({
               </div>
             )}
 
-            {/* Fetch error */}
             {recipeForm.fetchError && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {recipeForm.fetchError}
               </div>
             )}
 
-            {/* Metadata preview */}
             {recipeForm.metadata &&
               (recipeForm.metadata.recipe || recipeForm.metadata.image) && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -353,7 +373,6 @@ export function DrawerForm({
                 </div>
               )}
 
-            {/* Title */}
             <div className="space-y-1.5">
               <Label htmlFor="drawer-title">{t('recipes.titleLabel')}</Label>
               <Input
@@ -369,7 +388,6 @@ export function DrawerForm({
               />
             </div>
 
-            {/* Description */}
             <div className="space-y-1.5">
               <Label htmlFor="drawer-description">
                 {t('recipes.descriptionLabel')}
@@ -380,96 +398,45 @@ export function DrawerForm({
                 onChange={(e) => recipeForm.setDescription(e.target.value)}
                 placeholder={t('recipes.descriptionPlaceholder')}
                 rows={2}
-                className="flex w-full rounded-xl border border-input bg-input/30 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex w-full rounded-xl border border-input/80 bg-background/80 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
 
-            {/* Tags */}
             <TagSelector
               selectedTags={recipeForm.selectedTags}
               onChange={recipeForm.setSelectedTags}
             />
 
-            {/* Save recipe & assign */}
             <Button
-              className="w-full"
+              className="h-11 w-full"
               onClick={() => recipeForm.handleSave()}
               disabled={
                 recipeForm.saving ||
-                recipeForm.fetchingMetadata ||
-                recipeForm.generatingTags ||
-                !recipeForm.title.trim()
-              }
-            >
-              {recipeForm.saving
-                ? t('common.saving')
-                : t('planner.saveAndAssign')}
-            </Button>
-          </div>
-        )}
-
-        {/* Notes — always visible */}
-        <div>
-          <label className="text-sm font-medium mb-1.5 block">
-            {t('planner.notes')}
-          </label>
-          <textarea
-            className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-            rows={2}
-            placeholder={t('planner.anyNotes')}
-            value={editNotes}
-            onChange={(e) => setEditNotes(e.target.value)}
-          />
-        </div>
-
-        {/* Constraints — always visible */}
-        {constraints.length > 0 && (
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              {t('settings.constraints')}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {constraints.map((c) => {
-                const active = editConstraintIds.includes(c.id)
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() =>
-                      setEditConstraintIds((prev) =>
-                        active
-                          ? prev.filter((id) => id !== c.id)
-                          : [...prev, c.id],
-                      )
-                    }
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium border transition-all"
-                    style={
-                      active
-                        ? {
-                            backgroundColor: c.color + '22',
-                            color: c.color,
-                            borderColor: c.color,
-                          }
-                        : {}
-                    }
-                  >
-                    {c.emoji && <span>{c.emoji}</span>}
-                    {c.name}
-                  </button>
-                )
-              })}
+                  recipeForm.fetchingMetadata ||
+                  recipeForm.generatingTags ||
+                  !recipeForm.title.trim()
+                }
+              >
+                {recipeForm.saving
+                  ? t('common.saving')
+                  : t('planner.saveAndAssign')}
+              </Button>
             </div>
+            {constraintsBlock}
           </div>
         )}
       </div>
 
-      <div className="px-5 py-4 border-t border-border flex gap-2 shrink-0">
-        <Button variant="outline" className="flex-1" onClick={onClose}>
-          {t('common.cancel')}
-        </Button>
-        <Button className="flex-1" onClick={onSave} disabled={saving}>
-          {saving ? t('common.saving') : t('common.save')}
-        </Button>
+      <div className="relative shrink-0 border-t border-border/70 bg-background/85 px-5 py-4 backdrop-blur-xl">
+        <div className="flex gap-2">
+          <Button variant="outline" className="h-11 flex-1" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button className="h-11 flex-1" onClick={onSave} disabled={saving}>
+            {saving ? t('common.saving') : t('common.save')}
+          </Button>
+        </div>
       </div>
-    </>
+    </div>
   )
 }

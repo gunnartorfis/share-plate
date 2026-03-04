@@ -52,16 +52,26 @@
   },
   "subscriptions": {
     "title": "Following",
-    "mySubscriptions": "Following",
+    "myHome": "My home",
     "myHomes": "My homes",
+    "following": "Following",
     "discover": "Discover",
     "noSubscriptions": "Not following anyone yet",
     "nothingToDiscover": "Nothing to discover",
     "unsubscribe": "Unfollow",
+    "unfollow": "Unfollow",
     "subscribe": "Follow",
+    "follow": "Follow",
     "code": "Code",
     "enterCode": "Enter invite code...",
-    "join": "Join"
+    "join": "Join",
+    "notFollowingTitle": "Start following other homes",
+    "notFollowingDesc": "Follow friends and family to see their meal plans and get inspiration for your own cooking.",
+    "whatIsFollowing": "What does following mean?",
+    "followingExplanation": "When you follow another home, you can see their meal plans in your feed. It's a great way to get recipe ideas from people you know.",
+    "nearby": "Homes you can follow",
+    "homesCount": "{{count}} home followed",
+    "homesCount_plural": "{{count}} homes followed"
   },
   "home": {
     "title": "PlatePool",

@@ -356,9 +356,7 @@ function ConstraintsPage() {
                             <div
                               className={cn(
                                 'absolute left-0 z-[60] bg-card border border-border rounded-lg shadow-lg p-2 min-w-[180px] max-h-[50vh] overflow-y-auto overscroll-contain',
-                                i >= 4
-                                  ? 'bottom-full mb-1'
-                                  : 'top-full mt-1',
+                                i >= 4 ? 'bottom-full mb-1' : 'top-full mt-1',
                               )}
                             >
                               <div className="text-xs font-medium text-muted-foreground px-2 py-1 mb-1">

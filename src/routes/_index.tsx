@@ -735,16 +735,16 @@ function HomePage() {
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-sm"
+              className="fixed inset-0 z-[60] bg-gradient-to-b from-black/45 via-black/30 to-black/50 backdrop-blur-[2px]"
               onClick={drawer.close}
             />
             <div
               className={cn(
-                'fixed z-[70] bg-card border-border flex flex-col shadow-2xl',
+                'fixed z-[70] flex flex-col border border-border/70 bg-card/95 shadow-[0_22px_70px_rgba(0,0,0,0.2)] backdrop-blur-xl',
                 // Mobile: bottom sheet
-                'inset-x-0 bottom-0 max-h-[88dvh] overflow-hidden rounded-t-2xl border-t safe-area-bottom',
+                'inset-x-0 bottom-0 max-h-[90dvh] overflow-hidden rounded-t-3xl border-t safe-area-bottom',
                 // Desktop: right panel
-                'md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:w-full md:max-w-md md:max-h-none md:rounded-none md:border-t-0 md:border-l',
+                'md:inset-x-auto md:right-4 md:top-4 md:bottom-4 md:w-full md:max-w-[32rem] md:max-h-none md:rounded-3xl md:border-t md:border-l',
               )}
             >
               {/* Mobile drag handle */}
@@ -756,8 +756,6 @@ function HomePage() {
                 weekStart={weekStart}
                 meal={drawer.meal}
                 recipeUrl={drawer.recipeUrl}
-                editNotes={drawer.notes}
-                setEditNotes={drawer.setNotes}
                 editConstraintIds={drawer.constraintIds}
                 setEditConstraintIds={drawer.setConstraintIds}
                 constraints={constraints}

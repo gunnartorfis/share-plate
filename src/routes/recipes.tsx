@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { RecipeData, RecipeMetadata } from '@/hooks/use-recipe-form'
 import { AppLayout } from '@/components/layout/app-layout'
 import { deleteRecipe, getMyRecipes } from '@/lib/server/recipes'
 import { Button } from '@/components/ui/button'
@@ -9,11 +10,22 @@ import { Label } from '@/components/ui/label'
 import { TagSelector } from '@/components/ui/tag-selector'
 import { cn } from '@/lib/utils'
 import { useRecipeForm } from '@/hooks/use-recipe-form'
-import type { RecipeData, RecipeMetadata } from '@/hooks/use-recipe-form'
+import {
+  CheckIcon,
+  ClockIcon,
+  CookbookIcon,
+  EditIcon,
+  FlameIcon,
+  LinkIcon,
+  SparkleFilledIcon as SparkleIcon,
+  TrashIcon,
+  UsersIcon,
+  XIcon,
+} from '@/components/ui/icons'
 
 export const Route = createFileRoute('/recipes')({ component: RecipesPage })
 
-const HTTP_PROTOCOL = 'http'
+const URL_PREFIX = 'http'
 
 function RecipesPage() {
   const { t } = useTranslation()
@@ -158,7 +170,7 @@ function RecipesPage() {
                             <div className="absolute inset-0 rounded-full border-2 border-amber-200 border-t-amber-500 animate-spin" />
                             <SparkleIcon className="absolute inset-0 w-5 h-5 text-amber-500 animate-pulse" />
                           </div>
-                        ) : form.url.startsWith(HTTP_PROTOCOL) && form.metadata ? (
+                        ) : form.url.startsWith(URL_PREFIX) && form.metadata ? (
                           <CheckIcon className="w-5 h-5 text-green-500" />
                         ) : (
                           <LinkIcon className="w-5 h-5 text-muted-foreground" />
@@ -168,7 +180,7 @@ function RecipesPage() {
                     <p className="text-xs text-muted-foreground">
                       {form.fetchingMetadata
                         ? t('recipes.scanning')
-                        : form.url.startsWith(HTTP_PROTOCOL)
+                        : form.url.startsWith(URL_PREFIX)
                           ? t('recipes.pasteHint')
                           : t('recipes.urlHint')}
                     </p>
@@ -194,14 +206,15 @@ function RecipesPage() {
                     </div>
                   )}
 
-                  {form.metadata && (form.metadata.recipe || form.metadata.image) && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                      <RecipePreviewCard
-                        metadata={form.metadata}
-                        onClear={() => form.setMetadata(null)}
-                      />
-                    </div>
-                  )}
+                  {form.metadata &&
+                    (form.metadata.recipe || form.metadata.image) && (
+                      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <RecipePreviewCard
+                          metadata={form.metadata}
+                          onClear={() => form.setMetadata(null)}
+                        />
+                      </div>
+                    )}
 
                   <div className="space-y-1.5">
                     <Label htmlFor="title">{t('recipes.titleLabel')}</Label>
@@ -252,7 +265,9 @@ function RecipesPage() {
                   type="submit"
                   form="recipe-form"
                   className="flex-1"
-                  disabled={form.saving || form.fetchingMetadata || form.generatingTags}
+                  disabled={
+                    form.saving || form.fetchingMetadata || form.generatingTags
+                  }
                 >
                   {form.saving ? t('common.saving') : t('common.save')}
                 </Button>
@@ -478,180 +493,5 @@ function RecipeSection({
         </div>
       ))}
     </div>
-  )
-}
-
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.5}
-    >
-      <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function LinkIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-    >
-      <path
-        d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
-        strokeLinecap="round"
-      />
-      <path
-        d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function SparkleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
-    </svg>
-  )
-}
-
-function CookbookIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-    >
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" strokeLinecap="round" />
-      <path
-        d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M8 7h8M8 11h8M8 15h4" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function FlameIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function UsersIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="9" cy="7" r="4" />
-      <path
-        d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function EditIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-        strokeLinecap="round"
-      />
-      <path
-        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function TrashIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path
-        d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   )
 }
