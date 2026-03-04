@@ -249,7 +249,14 @@
         "soup": "Súpa",
         "salad": "Salat"
       }
-    }
+    },
+    "emptyReasonCurated": "Þú getur byrjað á alþjóðlegum uppskriftum frá okkur og bætt þeim við með einu smelli.",
+    "emptyReasonGenerated": "Þó þú eigir engar vistaðar uppskriftir notar skipulagningin samt takmarkanirnar þínar og valdar uppskriftir.",
+    "quickAddTitle": "Flýtiviðbót frá PlatePool",
+    "quickAddDesc": "Dragðu inn nokkrar byrjendauppskriftir og byrjaðu hraðar að skipuleggja.",
+    "quickAddAction": "Bæta hratt við",
+    "quickAddAlreadyAdded": "Komið í safn",
+    "quickAddCompactTitle": "Flýtiviðbót"
   },
   "settings": {
     "title": "Stillingar",

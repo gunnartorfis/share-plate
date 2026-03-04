@@ -129,14 +129,14 @@ export const generateMealPlan = createServerFn({ method: 'POST' })
       string,
       { name: string; frequency?: string }
     > = {
-      'preset-fish': { name: 'Fish', frequency: '2' },
+      'preset-fish': { name: 'Fish' },
       'preset-simple': { name: 'Simple' },
-      'preset-vegetarian': { name: 'Vegetarian', frequency: '2' },
-      'preset-vegan': { name: 'Vegan', frequency: '1' },
+      'preset-vegetarian': { name: 'Vegetarian' },
+      'preset-vegan': { name: 'Vegan' },
       'preset-healthy': { name: 'Healthy' },
       'preset-quick': { name: 'Quick' },
       'preset-budget': { name: 'Budget-friendly' },
-      'preset-new': { name: 'NEW', frequency: '1' },
+      'preset-new': { name: 'NEW' },
     }
     for (const [id, preset] of Object.entries(PRESET_CONSTRAINTS)) {
       if (!constraintMap.has(id)) {

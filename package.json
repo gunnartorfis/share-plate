@@ -13,7 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
-    "db:deploy": "drizzle-kit migrate"
+    "db:deploy": "drizzle-kit migrate",
+    "db:sync-quick-add": "node scripts/sync-quick-add-to-prod.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.37",

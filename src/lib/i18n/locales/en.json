@@ -249,7 +249,14 @@
         "soup": "Soup",
         "salad": "Salad"
       }
-    }
+    },
+    "emptyReasonCurated": "You can start from our global recipe picks and add them in one tap.",
+    "emptyReasonGenerated": "Even with no saved recipes, planner suggestions still use your constraints and curated recipe pool.",
+    "quickAddTitle": "Quick add from PlatePool",
+    "quickAddDesc": "Pull a few starter recipes into your bank and start planning faster.",
+    "quickAddAction": "Quick add",
+    "quickAddAlreadyAdded": "Added",
+    "quickAddCompactTitle": "Quick add"
   },
   "settings": {
     "title": "Settings",

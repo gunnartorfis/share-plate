@@ -64,7 +64,6 @@ const DEFAULT_CONSTRAINTS: Array<{
     nameKey: 'constraints.defaults.fish',
     emoji: '🐟',
     color: '#3498db',
-    frequency: '2',
   },
   {
     id: 'preset-simple',
@@ -77,14 +76,12 @@ const DEFAULT_CONSTRAINTS: Array<{
     nameKey: 'constraints.defaults.vegetarian',
     emoji: '🥗',
     color: '#2ecc71',
-    frequency: '2',
   },
   {
     id: 'preset-vegan',
     nameKey: 'constraints.defaults.vegan',
     emoji: '🌱',
     color: '#27ae60',
-    frequency: '1',
   },
   {
     id: 'preset-healthy',
@@ -109,7 +106,6 @@ const DEFAULT_CONSTRAINTS: Array<{
     nameKey: 'constraints.defaults.quick',
     emoji: '🥪',
     color: '#607d8b',
-    frequency: '1',
   },
   {
     id: 'preset-new',

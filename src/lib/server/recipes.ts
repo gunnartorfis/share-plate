@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDbWithSchema } from '../db'
 import { recipeLinks } from '../db/schema'
@@ -7,6 +7,14 @@ import { getUser } from '../auth/get-user'
 
 function uid() {
   return crypto.randomUUID()
+}
+
+function parseRecipeRow(row: typeof recipeLinks.$inferSelect) {
+  return {
+    ...row,
+    tags: JSON.parse(row.tags) as Array<string>,
+    metadata: row.metadata ? JSON.parse(row.metadata) : null,
+  }
 }
 
 export const getMyRecipes = createServerFn({ method: 'GET' }).handler(
@@ -19,13 +27,92 @@ export const getMyRecipes = createServerFn({ method: 'GET' }).handler(
       .from(recipeLinks)
       .where(eq(recipeLinks.userId, user.id))
       .orderBy(recipeLinks.createdAt)
-    return rows.map((r) => ({
-      ...r,
-      tags: JSON.parse(r.tags) as Array<string>,
-      metadata: r.metadata ? JSON.parse(r.metadata) : null,
-    }))
+    return rows.map(parseRecipeRow)
   },
 )
+
+export const getCuratedQuickAdds = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const [curatedRows, myRows] = await Promise.all([
+      db.select().from(recipeLinks).where(eq(recipeLinks.curated, 1)),
+      db.select().from(recipeLinks).where(eq(recipeLinks.userId, user.id)),
+    ])
+
+    const mySignatures = new Set(
+      myRows.map((r) => `${r.title.trim().toLowerCase()}::${r.url ?? ''}`),
+    )
+
+    return curatedRows
+      .filter((recipe) => {
+        const signature = `${recipe.title.trim().toLowerCase()}::${recipe.url ?? ''}`
+        return !mySignatures.has(signature)
+      })
+      .map(parseRecipeRow)
+      .slice(0, 8)
+  },
+)
+
+export const quickAddCuratedRecipe = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) =>
+    z.object({ curatedRecipeId: z.string() }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const db = await getDbWithSchema()
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const curatedRows = await db
+      .select()
+      .from(recipeLinks)
+      .where(
+        and(
+          eq(recipeLinks.id, data.curatedRecipeId),
+          eq(recipeLinks.curated, 1),
+        ),
+      )
+      .limit(1)
+
+    if (curatedRows.length === 0) {
+      throw new Error('Curated recipe not found')
+    }
+    const curatedRecipe = curatedRows[0]
+
+    const existingRows = await db
+      .select({ id: recipeLinks.id })
+      .from(recipeLinks)
+      .where(
+        and(
+          eq(recipeLinks.userId, user.id),
+          eq(recipeLinks.title, curatedRecipe.title),
+          curatedRecipe.url
+            ? eq(recipeLinks.url, curatedRecipe.url)
+            : isNull(recipeLinks.url),
+        ),
+      )
+      .limit(1)
+
+    if (existingRows.length > 0) {
+      return { id: existingRows[0].id, created: false }
+    }
+
+    const id = uid()
+    await db.insert(recipeLinks).values({
+      id,
+      userId: user.id,
+      title: curatedRecipe.title,
+      url: curatedRecipe.url,
+      description: curatedRecipe.description,
+      metadata: curatedRecipe.metadata,
+      tags: curatedRecipe.tags,
+      stars: curatedRecipe.stars,
+      curated: 0,
+    })
+    return { id, created: true }
+  })
 
 const SaveRecipeInput = z.object({
   id: z.string().optional(),

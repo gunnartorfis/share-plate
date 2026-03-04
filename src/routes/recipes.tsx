@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecipeData, RecipeMetadata } from '@/hooks/use-recipe-form'
 import { AppLayout } from '@/components/layout/app-layout'
-import { deleteRecipe, getMyRecipes } from '@/lib/server/recipes'
+import {
+  deleteRecipe,
+  getCuratedQuickAdds,
+  getMyRecipes,
+  quickAddCuratedRecipe,
+} from '@/lib/server/recipes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +22,7 @@ import {
   EditIcon,
   FlameIcon,
   LinkIcon,
+  PlusIcon,
   SparkleFilledIcon as SparkleIcon,
   TrashIcon,
   UsersIcon,
@@ -27,10 +33,22 @@ export const Route = createFileRoute('/recipes')({ component: RecipesPage })
 
 const URL_PREFIX = 'http'
 
+type CuratedQuickAdd = {
+  id: string
+  title: string
+  description: string | null
+  tags: Array<string>
+  stars: number
+}
+
 function RecipesPage() {
   const { t } = useTranslation()
   const [recipes, setRecipes] = useState<Array<RecipeData>>([])
+  const [curatedQuickAdds, setCuratedQuickAdds] = useState<
+    Array<CuratedQuickAdd>
+  >([])
   const [loading, setLoading] = useState(true)
+  const [addingQuickAddId, setAddingQuickAddId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<RecipeData | null>(null)
 
@@ -44,8 +62,12 @@ function RecipesPage() {
   async function load() {
     setLoading(true)
     try {
-      const rs = await getMyRecipes()
-      setRecipes(rs as Array<RecipeData>)
+      const [myRecipes, quickAdds] = await Promise.all([
+        getMyRecipes(),
+        getCuratedQuickAdds(),
+      ])
+      setRecipes(myRecipes as Array<RecipeData>)
+      setCuratedQuickAdds(quickAdds as Array<CuratedQuickAdd>)
     } finally {
       setLoading(false)
     }
@@ -78,6 +100,16 @@ function RecipesPage() {
     await load()
   }
 
+  async function handleQuickAdd(curatedRecipeId: string) {
+    setAddingQuickAddId(curatedRecipeId)
+    try {
+      await quickAddCuratedRecipe({ data: { curatedRecipeId } })
+      await load()
+    } finally {
+      setAddingQuickAddId(null)
+    }
+  }
+
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-6 py-8">
@@ -100,24 +132,54 @@ function RecipesPage() {
             ))}
           </div>
         ) : recipes.length === 0 && !showForm ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <div className="mb-4">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                <CookbookIcon className="w-8 h-8 text-amber-600" />
+          <div className="space-y-6 py-6">
+            <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-orange-50 to-background p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <CookbookIcon className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-lg font-display font-semibold text-foreground">
+                    {t('recipes.noRecipes')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('recipes.noRecipesDesc')}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                <p>{t('recipes.emptyReasonCurated')}</p>
+                <p>{t('recipes.emptyReasonGenerated')}</p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={openNew}>{t('recipes.addFirst')}</Button>
+                <Button variant="outline" onClick={openNew}>
+                  {t('recipes.addRecipe')}
+                </Button>
               </div>
             </div>
-            <p className="text-lg font-display font-medium mb-1">
-              {t('recipes.noRecipes')}
-            </p>
-            <p className="text-sm mb-4">{t('recipes.noRecipesDesc')}</p>
-            <Button onClick={openNew}>{t('recipes.addFirst')}</Button>
+
+            <QuickAddPanel
+              recipes={curatedQuickAdds}
+              addingQuickAddId={addingQuickAddId}
+              onQuickAdd={handleQuickAdd}
+              mode="full"
+            />
           </div>
         ) : (
-          <RecipeSection
-            recipes={recipes}
-            onEdit={openEdit}
-            onDelete={handleDelete}
-          />
+          <div className="space-y-6">
+            <QuickAddPanel
+              recipes={curatedQuickAdds}
+              addingQuickAddId={addingQuickAddId}
+              onQuickAdd={handleQuickAdd}
+              mode="compact"
+            />
+            <RecipeSection
+              recipes={recipes}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
+          </div>
         )}
 
         {showForm && (
@@ -277,6 +339,142 @@ function RecipesPage() {
         )}
       </div>
     </AppLayout>
+  )
+}
+
+function QuickAddPanel({
+  recipes,
+  addingQuickAddId,
+  onQuickAdd,
+  mode,
+}: {
+  recipes: Array<CuratedQuickAdd>
+  addingQuickAddId: string | null
+  onQuickAdd: (id: string) => void
+  mode: 'full' | 'compact'
+}) {
+  const { t } = useTranslation()
+  if (recipes.length === 0) return null
+
+  if (mode === 'compact') {
+    return (
+      <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2.5">
+        <div className="flex items-center gap-2 mb-2">
+          <SparkleIcon className="w-3.5 h-3.5 text-amber-500" />
+          <p className="text-xs font-medium text-muted-foreground">
+            {t('recipes.quickAddCompactTitle')}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {recipes.slice(0, 12).map((recipe) => (
+            <QuickAddChip
+              key={recipe.id}
+              recipe={recipe}
+              adding={addingQuickAddId === recipe.id}
+              onQuickAdd={onQuickAdd}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-base font-display font-semibold">
+            {t('recipes.quickAddTitle')}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t('recipes.quickAddDesc')}
+          </p>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {recipes.slice(0, 6).map((recipe) => (
+          <QuickAddRecipeRow
+            key={recipe.id}
+            recipe={recipe}
+            adding={addingQuickAddId === recipe.id}
+            onQuickAdd={onQuickAdd}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function QuickAddChip({
+  recipe,
+  adding,
+  onQuickAdd,
+}: {
+  recipe: CuratedQuickAdd
+  adding: boolean
+  onQuickAdd: (id: string) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <button
+      type="button"
+      disabled={adding}
+      onClick={() => onQuickAdd(recipe.id)}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors',
+        'border-border bg-background text-foreground hover:border-amber-300 hover:bg-amber-50',
+      )}
+    >
+      <PlusIcon className="w-3 h-3" />
+      <span>{recipe.title}</span>
+      {adding && <span className="text-muted-foreground">{t('common.saving')}</span>}
+    </button>
+  )
+}
+
+function QuickAddRecipeRow({
+  recipe,
+  adding,
+  onQuickAdd,
+}: {
+  recipe: CuratedQuickAdd
+  adding: boolean
+  onQuickAdd: (id: string) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="rounded-xl border border-border bg-background p-3 flex items-start gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{recipe.title}</p>
+        {recipe.description && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            {recipe.description}
+          </p>
+        )}
+        <div className="flex flex-wrap gap-1 mt-2">
+          {recipe.tags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground text-[10px]"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+      <Button
+        size="sm"
+        variant="default"
+        disabled={adding}
+        onClick={() => onQuickAdd(recipe.id)}
+        className="shrink-0"
+      >
+        <PlusIcon className="w-3.5 h-3.5 mr-1" />
+        {adding ? t('common.saving') : t('recipes.quickAddAction')}
+      </Button>
+    </div>
   )
 }
 

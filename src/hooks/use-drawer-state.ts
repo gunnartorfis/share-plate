@@ -259,7 +259,10 @@ export function useDrawerState(options: UseDrawerStateOptions) {
   // Pending edit resolution — month-view click navigates first, then opens
   // ------------------------------------------------------------------
   useEffect(() => {
-    if (state.pendingEdit !== null && state.pendingEdit.weekStart === weekStart) {
+    if (
+      state.pendingEdit !== null &&
+      state.pendingEdit.weekStart === weekStart
+    ) {
       const hydrated = openEdit(state.pendingEdit.dayOfWeek)
       if (hydrated) {
         dispatch({ type: 'CLEAR_PENDING' })
